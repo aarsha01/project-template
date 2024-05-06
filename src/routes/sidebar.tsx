@@ -8,7 +8,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import clsx from "clsx";
-import { Clapperboard, Home, ShoppingCart } from "lucide-react";
+import {
+  CircleUser,
+  Clapperboard,
+  Film,
+  Folders,
+  Home,
+  ShoppingCart,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 
 type Props = {
@@ -34,7 +41,7 @@ export default function Sidebar({ activePage }: Props) {
                 activePage === "projects" && "text-primary bg-muted"
               )}
             >
-              <Home className="h-4 w-4" />
+              <Folders className="h-4 w-4" />
               Projects
             </Link>
             <Link
@@ -44,7 +51,7 @@ export default function Sidebar({ activePage }: Props) {
                 activePage === "exports" && "text-primary bg-muted"
               )}
             >
-              <ShoppingCart className="h-4 w-4" />
+              <Film className="h-4 w-4" />
               Exports
             </Link>
           </nav>
@@ -57,7 +64,7 @@ export default function Sidebar({ activePage }: Props) {
                   to="#"
                   className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
                 >
-                  <ShoppingCart className="h-4 w-4" />
+                  <CircleUser className="h-4 w-4" />
                   Account
                 </Link>
               </DropdownMenuTrigger>

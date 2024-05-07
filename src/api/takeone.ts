@@ -1,9 +1,8 @@
-import { Script } from "../types";
+import { Project, Script } from "../types";
 
 type CreateProjectResponse = {
   success: boolean;
-  id: number;
-  script: Script;
+  project: Project;
 };
 
 export async function createProject({ prompt }: { prompt: string }) {
@@ -14,18 +13,16 @@ export async function createProject({ prompt }: { prompt: string }) {
     },
     body: JSON.stringify({ prompt }),
   });
-  const { id, success, script } =
-    (await response.json()) as CreateProjectResponse;
+  const { success, project } = (await response.json()) as CreateProjectResponse;
   if (!success) {
     throw new Error("Failed to create project");
   }
-  return { id, script };
+  return project;
 }
 
 type GetProjectResponse = {
-  id: number;
-  prompt: string;
-  script: Script;
+  success: boolean;
+  project: Project;
 };
 
 export async function getProject(projectId: string) {
@@ -33,4 +30,14 @@ export async function getProject(projectId: string) {
     `${process.env.BACKEND_API_HOST}/project/${projectId}`
   );
   return (await response.json()) as GetProjectResponse;
+}
+
+type GetProjectsResponse = {
+  success: boolean;
+  projects: Project[];
+};
+
+export async function getProjects() {
+  const response = await fetch(`${process.env.BACKEND_API_HOST}/projects`);
+  return (await response.json()) as GetProjectsResponse;
 }

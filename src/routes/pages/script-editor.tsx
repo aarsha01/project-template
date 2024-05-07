@@ -18,7 +18,10 @@ export default function ScriptEditor() {
   useEffect(() => {
     async function fetchScript() {
       try {
-        const project = await getProject(projectId);
+        const { project, success } = await getProject(projectId);
+        if (!success) {
+          throw new Error("Failed to fetch project");
+        }
         setSlideTexts(
           project.script.slideTextDescriptors.map((st) => st.content)
         );

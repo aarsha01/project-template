@@ -1,7 +1,6 @@
 import React from "react";
-import { createProject } from "../api/takeone";
 import { Button } from "@/components/ui/button";
-import Layout from "./layout";
+import Layout from "../layout";
 import { useNavigate } from "react-router-dom";
 
 export default function Projects() {

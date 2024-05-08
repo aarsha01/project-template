@@ -9,6 +9,7 @@ import Projects from "./routes/pages/projects";
 import Exports from "./routes/pages/exports";
 import CreateProject from "./routes/pages/create-project";
 import ScriptEditor from "./routes/pages/script-editor";
+import SlideshowEditor from "./routes/slideshow-editor";
 
 const ProjectPageRedirect = () => {
   const { projectId } = useParams();
@@ -21,6 +22,10 @@ export default function Router() {
       <Routes>
         <Route path="/projects/:projectId/script" element={<ScriptEditor />} />
         <Route path="/projects/:projectId" element={<ProjectPageRedirect />} />
+        <Route
+          path="/projects/:projectId/editor"
+          element={<SlideshowEditor />}
+        />
         <Route path="/projects/new" element={<CreateProject />} />
         <Route path="/projects" element={<Projects />}></Route>
         <Route path="/exports" element={<Exports />} />

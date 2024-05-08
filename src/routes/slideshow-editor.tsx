@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import Layout from "./layout";
-import { Film, Layers } from "lucide-react";
+import { ChevronDown, Film, Layers, Mic, Music } from "lucide-react";
 import classNames from "classnames";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const SAMPLE_PROJECT_TITLE = "5 ways to lose weight";
 const SAMPLE_SCENES: Scene[] = [
@@ -161,6 +168,70 @@ const ScenesPanel = (props: ScenePanelProps) => (
   </>
 );
 
+const GlobalPanel = () => {
+  return (
+    <div>
+      <div className="p-2 font-medium text-xs">Theme</div>
+      <div className="px-2 py-[1px]">
+        <Select>
+          <SelectTrigger className="w-[70%]">
+            <SelectValue placeholder="Theme" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="light">Light</SelectItem>
+            <SelectItem value="dark">Dark</SelectItem>
+            <SelectItem value="system">System</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="py-3">
+        <div className="p-2 font-medium text-xs">Size format</div>
+        <div className="px-2 py-[1px]">
+          <Select>
+            <SelectTrigger className="w-[70%]">
+              <SelectValue placeholder="Format" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Widescreen">Widescreen</SelectItem>
+              <SelectItem value="Vertical">Vertical</SelectItem>
+              <SelectItem value="Square">Square</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="p-2 font-medium text-xs">
+        <div>Voiceover</div>
+        <div className="flex p-4 justify-start gap-10 w-[90%]">
+          <div className="flex">
+            <Mic width={"18px"} />
+            <div className="font-normal pl-2 pt-1 w-[80px]">Adam,British</div>
+          </div>
+          <div className="flex flex-col">
+            <a className="underline cursor-pointer ">Change voice</a>
+            <a className="underline cursor-pointer pt-1">Disable voiceover</a>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-2 font-medium text-xs ">
+        <div>Background Music</div>
+        <div className="flex p-4 justify-start gap-10 w-[90%] ">
+          <div className="flex">
+            <Music width={"18px"} item-center />
+            <div className="font-normal pl-2 pt-1 w-[80px] ">
+              Bee Gees-Stayin alive
+            </div>
+          </div>
+          <div className="flex flex-col ">
+            <a className="underline cursor-pointer ">Change voice</a>
+            <a className="underline cursor-pointer pt-1 ">Disable music</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const EditorPanel = (props: EditorPanelProps) => {
   const [selectedTab, setSelectedTab] = useState<SelectedEditorTab>("scenes");
 
@@ -171,6 +242,7 @@ const EditorPanel = (props: EditorPanelProps) => {
         setSelectedTab={setSelectedTab}
       />
       {selectedTab === "scenes" && <ScenesPanel scenes={props.scenes} />}
+      {selectedTab === "global" && <GlobalPanel />}
     </>
   );
 };

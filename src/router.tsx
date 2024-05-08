@@ -10,6 +10,7 @@ import Exports from "./routes/pages/exports";
 import CreateProject from "./routes/pages/create-project";
 import ScriptEditor from "./routes/pages/script-editor";
 import SlideshowEditor from "./routes/slideshow-editor";
+import SlideshowPreview from "./routes/pages/slideshow-preview";
 
 const ProjectPageRedirect = () => {
   const { projectId } = useParams();
@@ -20,6 +21,10 @@ export default function Router() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route
+          path="/projects/:projectId/slideshow-preview"
+          element={<SlideshowPreview />}
+        />
         <Route path="/projects/:projectId/script" element={<ScriptEditor />} />
         <Route path="/projects/:projectId" element={<ProjectPageRedirect />} />
         <Route

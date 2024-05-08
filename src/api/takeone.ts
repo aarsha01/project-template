@@ -41,3 +41,23 @@ export async function getProjects() {
   const response = await fetch(`${process.env.BACKEND_API_HOST}/projects`);
   return (await response.json()) as GetProjectsResponse;
 }
+
+export async function updateScriptAndGenerateSlideshow(
+  projectId: string,
+  script: string[]
+) {
+  const response = await fetch(
+    `${process.env.BACKEND_API_HOST}/project/${projectId}/update-script-and-generate-slideshow`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ script }),
+    }
+  );
+  const { success } = (await response.json()) as { success: boolean };
+  if (!success) {
+    throw new Error("Failed to generate slideshow");
+  }
+}

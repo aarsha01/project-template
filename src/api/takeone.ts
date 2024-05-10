@@ -1,4 +1,4 @@
-import { Project, Script } from "../types";
+import { Project, Script, Slideshow } from "../types";
 
 type CreateProjectResponse = {
   success: boolean;
@@ -29,7 +29,11 @@ export async function getProject(projectId: string) {
   const response = await fetch(
     `${process.env.BACKEND_API_HOST}/project/${projectId}`
   );
-  return (await response.json()) as GetProjectResponse;
+  const { success, project } = (await response.json()) as GetProjectResponse;
+  if (!success) {
+    throw new Error("Failed to fetch project");
+  }
+  return project;
 }
 
 type GetProjectsResponse = {
@@ -60,4 +64,18 @@ export async function updateScriptAndGenerateSlideshow(
   if (!success) {
     throw new Error("Failed to generate slideshow");
   }
+}
+
+export async function getSlideshow(projectId: string) {
+  const response = await fetch(
+    `${process.env.BACKEND_API_HOST}/project/${projectId}/slideshow`
+  );
+  const { success, slideshow } = (await response.json()) as {
+    success: boolean;
+    slideshow: Slideshow;
+  };
+  if (!success) {
+    throw new Error("Failed to fetch slideshow");
+  }
+  return slideshow;
 }

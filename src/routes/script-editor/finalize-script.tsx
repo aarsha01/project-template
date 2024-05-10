@@ -16,12 +16,9 @@ export function FinalizeScript({
   useEffect(() => {
     async function fetchScript() {
       try {
-        const { project, success } = await getProject(projectId);
-        if (!success) {
-          throw new Error("Failed to fetch project");
-        }
+        const project = await getProject(projectId);
         setSlideTexts(
-          project.script.slideTextDescriptors.map((st) => st.content)
+          project.currentScript.slideTextDescriptors.map((st) => st.content)
         );
       } catch (error) {
         console.error(error);

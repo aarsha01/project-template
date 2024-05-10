@@ -1,6 +1,9 @@
 import { useParams } from "react-router-dom";
 import Layout from "../layout";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Project, Slideshow } from "@/src/types";
+import { getProject, getSlideshow } from "@/src/api/takeone";
+import { Loader2Icon } from "lucide-react";
 
 type SlideshowPreviewUrlParams = {
   projectId: string;
@@ -8,6 +11,26 @@ type SlideshowPreviewUrlParams = {
 
 export default function SlideshowPreview() {
   const { projectId } = useParams<SlideshowPreviewUrlParams>();
+
+  const [slideshow, setSlideshow] = useState<Slideshow>();
+  const [project, setProject] = useState<Project>();
+
+  useEffect(() => {
+    // Fetch the slideshow
+    const fetchData = async () => {
+      try {
+        const [slideshow, project] = await Promise.all([
+          getSlideshow(projectId),
+          getProject(projectId),
+        ]);
+        setSlideshow(slideshow);
+        setProject(project);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <Layout activePage="projects">
@@ -19,9 +42,11 @@ export default function SlideshowPreview() {
             </h1>
           </div>
           <div className="flex-1 flex flex-col items-start gap-16 text-center">
-            <div className="text-lg font-semibold">
-              I will work on this tomorrow
-            </div>
+            {slideshow ? (
+              <div className="text-lg font-semibold">{project?.prompt}</div>
+            ) : (
+              <Loader2Icon className="animate-spin" />
+            )}
           </div>
         </div>
       </main>

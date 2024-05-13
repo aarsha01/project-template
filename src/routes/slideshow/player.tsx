@@ -2,6 +2,7 @@ import { Player } from "@remotion/player";
 import { Slideshow } from "@/src/types";
 import { SlideshowComponent } from "./component";
 import { useMeasure } from "react-use";
+import { getSlideshowDuration } from "./helpers";
 
 type Props = {
   slideshow: Slideshow;
@@ -11,7 +12,7 @@ const FPS = 30;
 const ASPECT_RATIO = 16 / 9;
 
 export function SlideshowPlayer({ slideshow }: Props) {
-  const durationInFrames = slideshow.slides.length * 3 * FPS;
+  const durationInFrames = Math.floor(getSlideshowDuration(slideshow) * FPS);
   const [ref, { width, height }] = useMeasure();
 
   return (
@@ -30,6 +31,7 @@ export function SlideshowPlayer({ slideshow }: Props) {
         }}
         controls
       />
+      {/* Add a spacer div to maintain the aspect ratio of the player */}
       <div style={{ top: 0, height: `${width / ASPECT_RATIO}px` }} />
     </div>
   );

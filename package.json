@@ -23,9 +23,10 @@
     "@radix-ui/react-select": "^2.0.0",
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-tabs": "^1.0.4",
-    "@remotion/cli": "^4.0.154",
-    "@remotion/eslint-plugin": "^4.0.154",
-    "@remotion/player": "^4.0.154",
+    "@remotion/cli": "4.0.157",
+    "@remotion/eslint-plugin": "4.0.157",
+    "@remotion/player": "4.0.157",
+    "@remotion/preload": "4.0.157",
     "class-variance-authority": "^0.7.0",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
@@ -35,7 +36,7 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.23.0",
     "react-use": "^17.5.0",
-    "remotion": "^4.0.154",
+    "remotion": "4.0.157",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7"
   }

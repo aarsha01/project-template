@@ -11,6 +11,7 @@ import {
 } from "remotion";
 import { getSlideshowTimings } from "./helpers";
 import "@/src/slideshow-fonts.css";
+import { useSlideshowPreloader } from "./preloader";
 
 type Props = {
   slideshow: Slideshow;
@@ -47,6 +48,8 @@ function AnimatedTextLayer({ text }: { text: string }) {
 export function SlideshowComponent({ slideshow, fps }: Props) {
   const { slideTimingInfos } = getSlideshowTimings(slideshow);
 
+  useSlideshowPreloader(slideshow);
+
   return (
     <AbsoluteFill className="items-center justify-center bg-black text-white text-9xl">
       {slideshow.slides.map((slide, index) => {
@@ -54,18 +57,24 @@ export function SlideshowComponent({ slideshow, fps }: Props) {
         return (
           <Sequence
             key={`slide-${index}`}
+            premountFor={100}
             durationInFrames={Math.floor(slideTimingInfo.duration * fps)}
             from={Math.floor(slideTimingInfo.start * fps)}
           >
             <AbsoluteFill>
-              <Img src={slide.imageAsset.url} loading="eager" />
+              <Img
+                src={slide.imageAsset.url}
+                loading="eager"
+                pauseWhenLoading
+              />
             </AbsoluteFill>
             <AnimatedTextLayer text={slide.text} />
-            <Audio src={slide.audioAsset.url} />
+            <Audio src={slide.audioAsset.url} pauseWhenBuffering />
           </Sequence>
         );
       })}
       <Audio
+        pauseWhenBuffering
         key="background-music"
         src={slideshow.backgroundMusic.audioAsset.url}
         volume={0.3}

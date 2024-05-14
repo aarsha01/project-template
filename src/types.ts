@@ -34,12 +34,23 @@ export type Slide = {
   audioAsset: AudioAsset;
 };
 
+export const SIZE_FORMATS = [
+  "WIDESCREEN_16_9",
+  "SQUARE_1_1",
+  "STORY_9_16",
+  "VERTICAL_4_5",
+] as const;
+export type SizeFormat = (typeof SIZE_FORMATS)[number];
+
 export type Slideshow = {
   id: number;
   slides: Slide[];
   backgroundMusic: {
     id: number;
     audioAsset: AudioAsset;
+  };
+  settings: {
+    sizeFormat: SizeFormat;
   };
 };
 

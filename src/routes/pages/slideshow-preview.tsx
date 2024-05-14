@@ -1,5 +1,5 @@
 import { getProject, getSlideshow } from "@/src/api/takeone";
-import { Project, Slideshow } from "@/src/types";
+import { Project, SIZE_FORMATS, SizeFormat, Slideshow } from "@/src/types";
 import { Loader2Icon } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -26,6 +26,7 @@ export default function SlideshowPreview() {
 
   const [slideshow, setSlideshow] = useState<Slideshow>();
   const [project, setProject] = useState<Project>();
+  const [sizeFormat, setSizeFormat] = useState<SizeFormat>("WIDESCREEN_16_9");
 
   useEffect(() => {
     // Fetch the slideshow
@@ -37,6 +38,7 @@ export default function SlideshowPreview() {
         ]);
         setSlideshow(slideshow);
         setProject(project);
+        setSizeFormat(slideshow.settings.sizeFormat);
       } catch (error) {
         console.error(error);
       }
@@ -88,7 +90,10 @@ export default function SlideshowPreview() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label>Change size format</Label>
-                  <SizeFormatSelect />
+                  <SizeFormatSelect
+                    sizeFormat={sizeFormat}
+                    setSizeFormat={setSizeFormat}
+                  />
                 </div>
                 <div className="flex items-center gap-2">
                   <Checkbox id={backgroundMusicCheckboxId} />
@@ -138,11 +143,27 @@ function ThemeSelect() {
   );
 }
 
-const SIZE_FORMATS = ["widescreen", "square", "story", "vertical"] as const;
-type SizeFormat = (typeof SIZE_FORMATS)[number];
+function toSizeFormatLabel(sizeFormat: SizeFormat) {
+  switch (sizeFormat) {
+    case "WIDESCREEN_16_9":
+      return "Widescreen";
+    case "SQUARE_1_1":
+      return "Square";
+    case "STORY_9_16":
+      return "Story";
+    case "VERTICAL_4_5":
+      return "Vertical";
+  }
+  const exhaustiveCheck: never = sizeFormat;
+}
 
-function SizeFormatSelect() {
-  const [sizeFormat, setSizeFormat] = useState<SizeFormat>("widescreen");
+function SizeFormatSelect({
+  sizeFormat,
+  setSizeFormat,
+}: {
+  sizeFormat: SizeFormat;
+  setSizeFormat: (sizeFormat: SizeFormat) => void;
+}) {
   return (
     <Select
       value={sizeFormat}
@@ -153,12 +174,8 @@ function SizeFormatSelect() {
       </SelectTrigger>
       <SelectContent>
         {SIZE_FORMATS.map((sizeFormat) => (
-          <SelectItem
-            key={sizeFormat}
-            value={sizeFormat}
-            className="capitalize"
-          >
-            {sizeFormat}
+          <SelectItem key={sizeFormat} value={sizeFormat}>
+            {toSizeFormatLabel(sizeFormat)}
           </SelectItem>
         ))}
       </SelectContent>

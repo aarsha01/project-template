@@ -26,6 +26,7 @@
     "@radix-ui/react-tabs": "^1.0.4",
     "@remotion/cli": "4.0.157",
     "@remotion/eslint-plugin": "4.0.157",
+    "@remotion/layout-utils": "4.0.157",
     "@remotion/player": "4.0.157",
     "@remotion/preload": "4.0.157",
     "class-variance-authority": "^0.7.0",

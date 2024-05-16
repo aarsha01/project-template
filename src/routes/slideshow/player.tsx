@@ -3,6 +3,7 @@ import { Slideshow } from "@/src/types";
 import { SlideshowComponent } from "./component";
 import { useMeasure } from "react-use";
 import { getSlideshowDuration } from "./helpers";
+import { SlideshowThemedComponent } from "./themed-component";
 
 type Props = {
   slideshow: Slideshow;
@@ -18,7 +19,8 @@ export function SlideshowPlayer({ slideshow }: Props) {
   return (
     <div ref={ref} className="w-full flex flex-col relative">
       <Player
-        component={SlideshowComponent}
+        // component={SlideshowComponent}
+        component={SlideshowThemedComponent}
         inputProps={{ slideshow, fps: FPS }}
         durationInFrames={durationInFrames}
         compositionWidth={1920}

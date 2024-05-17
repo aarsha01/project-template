@@ -19,5 +19,6 @@ export function getSlideshowTimings(slideshow: Slideshow): SlideshowTimingInfo {
     const end = start + duration;
     return { start, end, duration };
   });
-  return { slideTimingInfos };
+  const totalDuration = getSlideshowDuration(slideshow);
+  return { slideTimingInfos, totalDuration };
 }

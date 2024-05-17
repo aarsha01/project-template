@@ -62,6 +62,7 @@ export type SlideshowTimingInfo = {
     end: number;
     duration: number;
   }[];
+  totalDuration: number;
 };
 
 export type TaskStatus = "none" | "running" | "success" | "error";

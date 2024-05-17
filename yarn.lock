@@ -1431,6 +1431,11 @@
   dependencies:
     "@typescript-eslint/utils" "5.19.0"
 
+"@remotion/layout-utils@4.0.157":
+  version "4.0.157"
+  resolved "https://registry.yarnpkg.com/@remotion/layout-utils/-/layout-utils-4.0.157.tgz#7e823e4f68a5397c186bf4ea3318d8eea26289d9"
+  integrity sha512-5KpAr1YGWj0wcK0d3QGaF4LybzIdd6P9/B3S72JtJxLRt276BtvjbRTGvweSbnW2p9oh+OIj5WUZB/fG7ipz1w==
+
 "@remotion/media-utils@4.0.157":
   version "4.0.157"
   resolved "https://registry.yarnpkg.com/@remotion/media-utils/-/media-utils-4.0.157.tgz#cd0057cef71682ad9b9dbe00357fc77928e60236"

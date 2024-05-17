@@ -22,6 +22,7 @@ export type ImageAsset = {
   url: string;
   width: number;
   height: number;
+  originalFilename: string;
 };
 
 export type AudioAsset = {

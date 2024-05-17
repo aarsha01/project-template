@@ -1,4 +1,5 @@
-import { Project, Script, Slideshow } from "../types";
+import { ImageAsset, Project, Script, Slideshow } from "../types";
+import md5 from "crypto-js/md5";
 
 type CreateProjectResponse = {
   success: boolean;
@@ -7,8 +8,14 @@ type CreateProjectResponse = {
 
 type SignedUrlForUploadResponse = {
   uploadUrl: string;
-  fileName: string;
+  filepath: string;
 };
+
+type CreateImageAssetResponse = {
+  imageAsset: ImageAsset;
+};
+
+type ImageDimensions = { width: number; height: number };
 
 export async function createProject({ prompt }: { prompt: string }) {
   const response = await fetch(`${process.env.BACKEND_API_HOST}/project`, {
@@ -86,12 +93,14 @@ export async function getSlideshow(projectId: string) {
 }
 
 export async function uploadImageToStorage(file: File, projectId: string) {
-  const signedUrlResult: SignedUrlForUploadResponse =
+  const { uploadUrl, filepath }: SignedUrlForUploadResponse =
     await getSignedUrlForUpload();
 
-  await uploadFileViaSignedUrl(signedUrlResult.uploadUrl, file);
+  await uploadFileViaSignedUrl(file, uploadUrl);
 
-  return;
+  const { imageAsset } = await createImageAsset(file, filepath);
+
+  return imageAsset;
 }
 
 async function getSignedUrlForUpload() {
@@ -106,7 +115,73 @@ async function getSignedUrlForUpload() {
   return response.json();
 }
 
-async function uploadFileViaSignedUrl(uploadUrl: string, file: File) {
+async function createImageAsset(
+  file: File,
+  filepath: string
+): Promise<CreateImageAssetResponse> {
+  const { width, height }: ImageDimensions = await getImageDimensions(file);
+  const fileHash = await getFileHash(file);
+
+  const response = await fetch(
+    `${process.env.BACKEND_API_HOST}/createUserImageAsset`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        filepath: filepath,
+        sourceId: fileHash,
+        width: width,
+        height: height,
+        originalFilename: file.name,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to create Image asset");
+  }
+
+  return response.json();
+}
+
+function getImageDimensions(file: File): Promise<ImageDimensions> {
+  return new Promise((resolve) => {
+    var reader = new FileReader();
+
+    reader.onload = function () {
+      var img = new Image();
+
+      img.onload = function () {
+        resolve({
+          width: img.width,
+          height: img.height,
+        });
+      };
+
+      img.src = reader.result as string;
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+function getFileHash(file: File): Promise<string> {
+  return new Promise((resolve) => {
+    var reader = new FileReader();
+
+    reader.onload = function (event) {
+      var binary = event.target.result;
+      var md5Hash = md5(binary).toString();
+      resolve(md5Hash);
+    };
+
+    reader.readAsBinaryString(file);
+  });
+}
+
+async function uploadFileViaSignedUrl(file: File, uploadUrl: string) {
   const response = await fetch(uploadUrl, {
     method: "PUT",
     headers: {

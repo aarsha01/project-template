@@ -19,6 +19,7 @@ import { preloadVideo } from "@remotion/preload";
 import clsx from "clsx";
 import { list, range, sum } from "radash";
 import { fillTextBox, measureText } from "@remotion/layout-utils";
+import { useMeasure } from "react-use";
 
 type Props = {
   slideshow: Slideshow;
@@ -75,18 +76,33 @@ function getLines(
   return lines;
 }
 
-const textStyles = {
+type TextStyles = {
+  fontSize: number;
+  fontFamily: string;
+  fontWeight: number;
+  lineHeight: string;
+};
+
+const normalTextStyles = {
   fontSize: 40,
   fontFamily: "Poppins",
   fontWeight: 700,
   lineHeight: "1.5",
-};
+} satisfies TextStyles;
+
+const titleTextStyles = {
+  fontSize: 72,
+  fontFamily: "Arvo",
+  fontWeight: 700,
+  lineHeight: "1.5",
+} satisfies TextStyles;
 
 type AnimatedTextLayerProps = {
   text: string;
   width: number;
   animationDirection: "to-left" | "to-right" | "to-top" | "to-bottom";
   className?: string;
+  textStyles: TextStyles;
 };
 
 function AnimatedTextLayer({
@@ -94,6 +110,7 @@ function AnimatedTextLayer({
   width,
   animationDirection,
   className,
+  textStyles,
 }: AnimatedTextLayerProps) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -317,7 +334,8 @@ export function SlideshowThemedComponent({ slideshow, fps }: Props) {
             {/* <Layout1 slide={slide} /> */}
             {/* <Layout2 slide={slide} /> */}
             {/* <Layout3 slide={slide} /> */}
-            <LayoutComponent slide={slide} />
+            {/* <LayoutComponent slide={slide} /> */}
+            <Layout4 slide={slide} />
             <Audio src={slide.audioAsset.url} pauseWhenBuffering />
           </Sequence>
         );
@@ -340,20 +358,32 @@ function Layout1({ slide }: { slide: Slide }) {
   const imageWidth = 760;
   const imageHeight = height - 2 * padding;
   const textWidth = width - imageWidth - gap - 2 * padding;
+  const titleTextWidth = width - 2 * padding;
+  const titleGap = 30;
   return (
-    <div className="flex flex-row items-center" style={{ padding, gap }}>
+    <div className="flex flex-col" style={{ padding, gap: titleGap }}>
       <AnimatedTextLayer
-        className="text-left"
+        className="text-center"
         animationDirection="to-right"
-        text={slide.text}
-        width={textWidth}
+        text={slide.headingText}
+        textStyles={titleTextStyles}
+        width={titleTextWidth}
       />
-      <AnimatedImageLayer
-        animation="to-right"
-        slide={slide}
-        width={imageWidth}
-        height={imageHeight}
-      />
+      <div className="flex flex-row items-center outline" style={{ gap }}>
+        <AnimatedTextLayer
+          className="text-left"
+          animationDirection="to-right"
+          text={slide.text}
+          textStyles={normalTextStyles}
+          width={textWidth}
+        />
+        <AnimatedImageLayer
+          animation="to-right"
+          slide={slide}
+          width={imageWidth}
+          height={imageHeight}
+        />
+      </div>
     </div>
   );
 }
@@ -367,11 +397,11 @@ function Layout2({ slide }: { slide: Slide }) {
   const { height: textHeight } = measureText({
     text: slide.text,
     validateFontIsLoaded: true,
-    fontFamily: textStyles.fontFamily,
-    fontSize: textStyles.fontSize,
-    fontWeight: textStyles.fontWeight,
+    fontFamily: normalTextStyles.fontFamily,
+    fontSize: normalTextStyles.fontSize,
+    fontWeight: normalTextStyles.fontWeight,
     additionalStyles: {
-      lineHeight: textStyles.lineHeight,
+      lineHeight: normalTextStyles.lineHeight,
     },
   });
   const imageWidth = width - 2 * padding;
@@ -389,6 +419,7 @@ function Layout2({ slide }: { slide: Slide }) {
         animationDirection="to-top"
         text={slide.text}
         width={textWidth}
+        textStyles={normalTextStyles}
       />
     </div>
   );
@@ -414,7 +445,221 @@ function Layout3({ slide }: { slide: Slide }) {
         animationDirection="to-right"
         text={slide.text}
         width={textWidth}
+        textStyles={normalTextStyles}
       />
+    </div>
+  );
+}
+
+type AnimatedTextLayer2Props = {
+  text: string;
+  animationDirection: "to-left" | "to-right" | "to-top" | "to-bottom";
+  className?: string;
+  textStyles: TextStyles;
+};
+
+function AnimatedTextLayer2({
+  text,
+  animationDirection,
+  className,
+  textStyles,
+}: AnimatedTextLayer2Props) {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+
+  const [ref, { width }] = useMeasure();
+
+  const measured = width > 0;
+  const lines = useMemo(() => {
+    if (!width) {
+      return [];
+    }
+    return getLines(text, width, textStyles, {
+      lineHeight: textStyles.lineHeight,
+    });
+  }, [text, width]);
+
+  useEffect(() => {
+    console.log(lines);
+  }, [lines]);
+
+  const animationDurationInFrames = 0.5 * fps;
+
+  const springs = new Array(lines.length).fill(0).map((_, index) => {
+    return spring({
+      frame: frame - index * 5,
+      durationInFrames: animationDurationInFrames,
+      fps,
+      config: {
+        mass: 1,
+        stiffness: 43,
+        damping: 12,
+      },
+    });
+  });
+
+  const transformer = (index: number) => {
+    const spring = springs[index];
+    if (animationDirection === "to-left") {
+      return `translateX(${interpolate(spring, [0, 1], [50, 0])}px)`;
+    } else if (animationDirection === "to-right") {
+      return `translateX(${interpolate(spring, [0, 1], [-50, 0])}px)`;
+    } else if (animationDirection === "to-top") {
+      return `translateY(${interpolate(spring, [0, 1], [50, 0])}px)`;
+    } else if (animationDirection === "to-bottom") {
+      return `translateY(${interpolate(spring, [0, 1], [-50, 0])}px)`;
+    }
+    const _exhaustiveCheck: never = animationDirection;
+  };
+
+  return (
+    <div
+      ref={ref}
+      className={clsx("antialiased text-[#376E2A]", className)}
+      style={{
+        fontSize: textStyles.fontSize,
+        fontFamily: textStyles.fontFamily,
+        fontWeight: textStyles.fontWeight,
+        lineHeight: textStyles.lineHeight,
+        opacity: measured ? 1 : 0,
+      }}
+    >
+      {!measured && text}
+      {measured &&
+        lines.map((line, index) => (
+          <span
+            key={index}
+            className="whitespace-pre inline-block"
+            style={{
+              transform: transformer(index),
+              opacity: interpolate(springs[index], [0, 1], [0, 1]),
+            }}
+          >
+            {line}
+          </span>
+        ))}
+    </div>
+  );
+}
+
+type AnimatedImageLayer2Props = {
+  slide: Slide;
+  animation:
+    | "to-left"
+    | "to-right"
+    | "to-top"
+    | "to-bottom"
+    | "zoom-in"
+    | "zoom-out";
+};
+
+function AnimatedImageLayer2({ slide, animation }: AnimatedImageLayer2Props) {
+  const frame = useCurrentFrame();
+  const { durationInFrames } = useVideoConfig();
+  const [ref, { width, height }] = useMeasure();
+
+  const distance = 200;
+  const isAnimationVertical =
+    animation === "to-top" || animation === "to-bottom";
+  const isAnimationHorizontal =
+    animation === "to-left" || animation === "to-right";
+  const isAnimationZoom = animation === "zoom-in" || animation === "zoom-out";
+
+  const scale = isAnimationZoom
+    ? interpolate(
+        frame,
+        [0, durationInFrames],
+        animation === "zoom-in" ? [1, 1.4] : [1.4, 1],
+        {
+          easing: Easing.linear,
+        }
+      )
+    : 1;
+
+  const deltaX = isAnimationHorizontal
+    ? interpolate(
+        frame,
+        [0, durationInFrames],
+        animation === "to-left" ? [0, -distance] : [-distance, 0],
+        {
+          easing: Easing.linear,
+        }
+      )
+    : 0;
+  const deltaY = isAnimationVertical
+    ? interpolate(
+        frame,
+        [0, durationInFrames],
+        animation === "to-top" ? [0, -distance] : [-distance, 0],
+        {
+          easing: Easing.linear,
+        }
+      )
+    : 0;
+
+  const opacity = interpolate(
+    frame,
+    [0, 30, durationInFrames - 30, durationInFrames],
+    [0, 1, 1, 0],
+    {
+      easing: Easing.ease,
+    }
+  );
+
+  const imgWidth = width + (isAnimationVertical ? 0 : distance);
+  const imgHeight = height + (isAnimationVertical ? distance : 0);
+
+  return (
+    <div
+      ref={ref}
+      className="w-full h-full relative rounded-[80px] box-content border-[2px] border-[#376E2A] overflow-hidden"
+      style={{
+        opacity,
+      }}
+    >
+      <Img
+        className="block absolute top-0 left-0 object-cover"
+        style={{
+          minWidth: imgWidth,
+          width: imgWidth,
+          height: imgHeight,
+          minHeight: imgHeight,
+          left: `${deltaX}px`,
+          top: `${deltaY}px`,
+          transform: `scale(${scale})`,
+        }}
+        width={imgWidth}
+        height={imgHeight}
+        src={slide.imageAsset.url}
+        loading="eager"
+        pauseWhenLoading
+      />
+    </div>
+  );
+}
+
+function Layout4({ slide }: { slide: Slide }) {
+  return (
+    <div className="max-w-full max-h-full flex flex-col flex-1 items-center p-[60px] gap-[30px]">
+      <AnimatedTextLayer2
+        className="text-center text-[#376E2A]"
+        animationDirection="to-right"
+        text={slide.headingText}
+        textStyles={titleTextStyles}
+      />
+      <div className="max-w-full flex-1 flex flex-row gap-[120px]">
+        <div className="flex-1 flex items-center">
+          <AnimatedTextLayer2
+            className="text-left flex flex-col items-start"
+            animationDirection="to-right"
+            text={slide.text}
+            textStyles={normalTextStyles}
+          />
+        </div>
+        <div className="w-[760px] h-full">
+          <AnimatedImageLayer2 animation="to-right" slide={slide} />
+        </div>
+      </div>
     </div>
   );
 }

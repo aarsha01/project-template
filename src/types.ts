@@ -32,6 +32,7 @@ export type AudioAsset = {
 };
 
 export type Slide = {
+  headingText: string;
   text: string;
   imageAsset: ImageAsset;
   audioAsset: AudioAsset;

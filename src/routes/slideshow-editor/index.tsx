@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import CropDialog from "./cropper/crop-dialog";
+import { useParams } from "react-router-dom";
+import { uploadImageToStorage } from "@/src/api/takeone";
 
 interface Project {
   title: string;
@@ -116,6 +118,10 @@ interface EditorPanelHeaderProps {
   setSelectedTab: (selectedTab: SelectedEditorTab) => void;
 }
 
+type SlideshowPreviewUrlParams = {
+  projectId: string;
+};
+
 interface Scene {
   id: string;
   text: string;
@@ -198,9 +204,16 @@ const EditorPanelHeader = (props: EditorPanelHeaderProps) => {
   );
 };
 
+function onUploadFile(e, projectId) {
+  const file = e.target.files[0];
+  const res = uploadImageToStorage(file, projectId);
+}
+
 const Scene = (props: SceneProps) => {
   const { scene, sceneNo } = props;
   const [uploadImageModal, setUploadImageModal] = useState(false);
+
+  const { projectId } = useParams<SlideshowPreviewUrlParams>();
 
   return (
     <div className="border-b-2 p-2 pb-4 text-xs border-gray-200">
@@ -237,9 +250,7 @@ const Scene = (props: SceneProps) => {
               id="image"
               type="file"
               accept="image/png, image/jpeg"
-              onChange={(e) => {
-                //onHandleChange((e) => setUploadedImage(e.target.files[0]));
-              }}
+              onChange={(e) => onUploadFile(e, projectId)}
             />
             <div className="underline cursor-pointer">
               Choose from stock library

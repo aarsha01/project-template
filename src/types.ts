@@ -20,6 +20,8 @@ export type Script = {
 export type ImageAsset = {
   id: number;
   url: string;
+  width: number;
+  height: number;
 };
 
 export type AudioAsset = {

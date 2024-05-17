@@ -5,6 +5,11 @@ type CreateProjectResponse = {
   project: Project;
 };
 
+type SignedUrlForUploadResponse = {
+  uploadUrl: string;
+  fileName: string;
+};
+
 export async function createProject({ prompt }: { prompt: string }) {
   const response = await fetch(`${process.env.BACKEND_API_HOST}/project`, {
     method: "POST",
@@ -78,4 +83,39 @@ export async function getSlideshow(projectId: string) {
     throw new Error("Failed to fetch slideshow");
   }
   return slideshow;
+}
+
+export async function uploadImageToStorage(file: File, projectId: string) {
+  const signedUrlResult: SignedUrlForUploadResponse =
+    await getSignedUrlForUpload();
+
+  await uploadFileViaSignedUrl(signedUrlResult.uploadUrl, file);
+
+  return;
+}
+
+async function getSignedUrlForUpload() {
+  const response = await fetch(
+    `${process.env.BACKEND_API_HOST}/getImageUploadSignedUrl`
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to generate upload url");
+  }
+
+  return response.json();
+}
+
+async function uploadFileViaSignedUrl(uploadUrl: string, file: File) {
+  const response = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/octet-stream",
+    },
+    body: file,
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to upload file");
+  }
 }

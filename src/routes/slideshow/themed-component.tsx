@@ -2,18 +2,14 @@ import "@/src/slideshow-fonts.css";
 import { Slideshow } from "@/src/types";
 import { AbsoluteFill, Audio, Sequence } from "remotion";
 import { getSlideshowTimings } from "./helpers";
-import { Layout1 } from "./layers/layout1";
-import { Layout2 } from "./layers/layout2";
-import { Layout3 } from "./layers/layout3";
 import { LoopedVideoLayer } from "./layers/looped-video-layer";
 import { useSlideshowPreloader } from "./preloader";
+import { SlideRenderer } from "./themes/serene-green";
 
 type Props = {
   slideshow: Slideshow;
   fps: number;
 };
-
-const layoutComponents = [Layout1, Layout3, Layout2];
 
 export function SlideshowThemedComponent({ slideshow, fps }: Props) {
   const { slideTimingInfos } = getSlideshowTimings(slideshow);
@@ -28,8 +24,6 @@ export function SlideshowThemedComponent({ slideshow, fps }: Props) {
       </div>
       {slideshow.slides.map((slide, index) => {
         const slideTimingInfo = slideTimingInfos[index];
-        const LayoutComponent =
-          layoutComponents[index % layoutComponents.length];
         return (
           <Sequence
             key={`slide-${index}`}
@@ -40,7 +34,7 @@ export function SlideshowThemedComponent({ slideshow, fps }: Props) {
             {/* <Layout1 slide={slide} /> */}
             {/* <Layout2 slide={slide} /> */}
             {/* <Layout3 slide={slide} /> */}
-            <LayoutComponent slide={slide} />
+            <SlideRenderer index={index} slide={slide} />
             <Audio src={slide.audioAsset.url} pauseWhenBuffering />
           </Sequence>
         );

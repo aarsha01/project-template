@@ -81,7 +81,7 @@ const ANIMATION_CONFIG: Record<AnimationType, AnimationTypeConfig> = {
   },
 } as const;
 
-export function AnimatedImageLayer2({ slide, animation }: Props) {
+export function AnimatedImageLayer({ slide, animation }: Props) {
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
   const [ref, { width, height }] = useMeasure();

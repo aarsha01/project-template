@@ -48,7 +48,7 @@ type Props = {
   textStyles: TextStyles;
 };
 
-export function AnimatedTextLayer2({
+export function AnimatedTextLayer({
   text,
   animation,
   className,

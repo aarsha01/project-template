@@ -14,6 +14,7 @@
     "assert": "^2.0.0",
     "parcel": "^2.11.0",
     "postcss": "^8.4.33",
+    "prettier": "3.2.5",
     "process": "^0.11.10",
     "tailwindcss": "^3.4.1"
   },

@@ -1,4 +1,4 @@
-import { Slide, Slideshow, SlideshowTimingInfo } from "@/src/types";
+import { SizeFormat, Slide, Slideshow, SlideshowTimingInfo } from "@/src/types";
 import { sum } from "radash";
 
 const SLIDE_SILENT_DURATION = 1;
@@ -21,4 +21,24 @@ export function getSlideshowTimings(slideshow: Slideshow): SlideshowTimingInfo {
   });
   const totalDuration = getSlideshowDuration(slideshow);
   return { slideTimingInfos, totalDuration };
+}
+
+export function getCompostionSize(sizeFormat: SizeFormat) {
+  switch (sizeFormat) {
+    case "WIDESCREEN_16_9":
+      return [1920, 1080];
+    case "SQUARE_1_1":
+      return [1080, 1080];
+    case "STORY_9_16":
+      return [1080, 1920];
+    case "VERTICAL_4_5":
+      return [1080, 1350];
+    default:
+      const exhaustiveCheck: never = sizeFormat;
+  }
+}
+
+export function getAspectRatio(sizeFormat: SizeFormat) {
+  const [width, height] = getCompostionSize(sizeFormat);
+  return width / height;
 }

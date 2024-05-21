@@ -1,4 +1,4 @@
-import { ImageAsset, Project, Script, Slideshow } from "../types";
+import { ImageAsset, Project, Script, SizeFormat, Slideshow } from "../types";
 import md5 from "crypto-js/md5";
 
 type CreateProjectResponse = {
@@ -193,4 +193,32 @@ async function uploadFileViaSignedUrl(file: File, uploadUrl: string) {
   if (!response.ok) {
     throw new Error("Failed to upload file");
   }
+}
+
+export async function saveSlideshowSettings(
+  slideshowId: string,
+  settings: { sizeFormat: SizeFormat }
+) {
+  const response = await fetch(
+    `${process.env.BACKEND_API_HOST}/slideshow/${slideshowId}/settings`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(settings),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to save slideshow settings");
+  }
+  const { success, slideshow } = (await response.json()) as {
+    success: boolean;
+    slideshow: Slideshow;
+  };
+  if (!success) {
+    throw new Error("Failed to fetch slideshow");
+  }
+  return slideshow;
 }

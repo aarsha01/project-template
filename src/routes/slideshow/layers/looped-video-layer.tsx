@@ -34,7 +34,11 @@ export function LoopedVideoLayer({ slideshow }: Props) {
           durationInFrames={Math.floor(LOOPING_VIDEO_DURATION * fps)}
           from={Math.floor(index * LOOPING_VIDEO_DURATION * fps)}
         >
-          <Video src={LOOPING_BACKGROUND_VIDEO_URL} pauseWhenBuffering />
+          <Video
+            src={LOOPING_BACKGROUND_VIDEO_URL}
+            pauseWhenBuffering
+            className="object-cover"
+          />
         </Sequence>
       ))}
     </>

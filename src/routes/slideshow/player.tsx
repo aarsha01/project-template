@@ -1,40 +1,52 @@
 import { Player } from "@remotion/player";
-import { Slideshow } from "@/src/types";
-import { SlideshowComponent } from "./component";
+import { SizeFormat, Slideshow } from "@/src/types";
 import { useMeasure } from "react-use";
-import { getSlideshowDuration } from "./helpers";
+import {
+  getAspectRatio,
+  getCompostionSize,
+  getSlideshowDuration,
+} from "./helpers";
 import { SlideshowThemedComponent } from "./themed-component";
 
 type Props = {
   slideshow: Slideshow;
+  sizeFormat: SizeFormat;
 };
 
 const FPS = 30;
-const ASPECT_RATIO = 16 / 9;
 
-export function SlideshowPlayer({ slideshow }: Props) {
+const MAX_HEIGHT = 720;
+
+export function SlideshowPlayer({ slideshow, sizeFormat }: Props) {
   const durationInFrames = Math.floor(getSlideshowDuration(slideshow) * FPS);
-  const [ref, { width, height }] = useMeasure();
+  const [ref, { width: containerWidth }] = useMeasure();
+
+  const aspectRatio = getAspectRatio(sizeFormat);
+
+  const [compositionWidth, compositionHeight] = getCompostionSize(sizeFormat);
+
+  const calculatedHeight = containerWidth / aspectRatio;
+  const actualHeight = Math.min(calculatedHeight, MAX_HEIGHT);
+  const actualWidth = actualHeight * aspectRatio;
 
   return (
-    <div ref={ref} className="w-full flex flex-col relative">
+    <div ref={ref} className="w-full flex flex-col items-center relative">
       <Player
-        // component={SlideshowComponent}
         component={SlideshowThemedComponent}
-        inputProps={{ slideshow, fps: FPS }}
+        inputProps={{ slideshow, fps: FPS, sizeFormat }}
         durationInFrames={durationInFrames}
-        compositionWidth={1920}
-        compositionHeight={1080}
+        compositionWidth={compositionWidth}
+        compositionHeight={compositionHeight}
         fps={FPS}
         style={{
           position: "absolute",
-          width: `${width}px`,
-          height: `${width / ASPECT_RATIO}px`,
+          width: `${actualWidth}px`,
+          height: `${actualHeight}px`,
         }}
         controls
       />
       {/* Add a spacer div to maintain the aspect ratio of the player */}
-      <div style={{ top: 0, height: `${width / ASPECT_RATIO}px` }} />
+      <div style={{ top: 0, height: `${actualHeight}px` }} />
     </div>
   );
 }

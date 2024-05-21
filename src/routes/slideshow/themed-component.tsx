@@ -1,5 +1,5 @@
 import "@/src/slideshow-fonts.css";
-import { Slideshow } from "@/src/types";
+import { SizeFormat, Slideshow } from "@/src/types";
 import { AbsoluteFill, Audio, Sequence } from "remotion";
 import { getSlideshowTimings } from "./helpers";
 import { LoopedVideoLayer } from "./layers/looped-video-layer";
@@ -9,9 +9,14 @@ import { SlideRenderer } from "./themes/serene-green";
 type Props = {
   slideshow: Slideshow;
   fps: number;
+  sizeFormat: SizeFormat;
 };
 
-export function SlideshowThemedComponent({ slideshow, fps }: Props) {
+export function SlideshowThemedComponent({
+  slideshow,
+  fps,
+  sizeFormat,
+}: Props) {
   const { slideTimingInfos } = getSlideshowTimings(slideshow);
 
   useSlideshowPreloader(slideshow);
@@ -34,7 +39,11 @@ export function SlideshowThemedComponent({ slideshow, fps }: Props) {
             {/* <Layout1 slide={slide} /> */}
             {/* <Layout2 slide={slide} /> */}
             {/* <Layout3 slide={slide} /> */}
-            <SlideRenderer index={index} slide={slide} />
+            <SlideRenderer
+              index={index}
+              slide={slide}
+              sizeFormat={sizeFormat}
+            />
             <Audio src={slide.audioAsset.url} pauseWhenBuffering />
           </Sequence>
         );

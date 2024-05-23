@@ -11,9 +11,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
+} from "@/components/ui/carousel";
+
 import CropDialog from "./cropper/crop-dialog";
 import { useParams } from "react-router-dom";
 import { uploadImageToStorage } from "@/src/api/takeone";
+import { ImageAsset } from "@/src/types";
 
 interface Project {
   title: string;
@@ -138,17 +156,20 @@ interface SceneProps {
   sceneNo: number;
   aspect: number;
   setCrop: (crop) => void;
+  onImageUpdate: (imageUrl) => void;
 }
 
 interface ScenePanelProps {
   scenes: Scene[];
   aspect: number;
   onCropUpdate: (sceneId, crop) => void;
+  onImageUpdate: (sceneId, imageUrl) => void;
 }
 
 interface EditorPanelProps {
   projectData: Project;
   onCropUpdate: (sceneId, crop) => void;
+  onImageUpdate: (sceneId, imageUrl) => void;
 }
 
 interface GlobalPanelProps {
@@ -204,14 +225,15 @@ const EditorPanelHeader = (props: EditorPanelHeaderProps) => {
   );
 };
 
-function onUploadFile(e, projectId) {
+async function onUploadFile(e, projectId) {
   const file = e.target.files[0];
-  const res = uploadImageToStorage(file, projectId);
+  const res: ImageAsset = await uploadImageToStorage(file, projectId);
+
+  return res.url;
 }
 
 const Scene = (props: SceneProps) => {
   const { scene, sceneNo } = props;
-  const [uploadImageModal, setUploadImageModal] = useState(false);
 
   const { projectId } = useParams<SlideshowPreviewUrlParams>();
 
@@ -235,25 +257,68 @@ const Scene = (props: SceneProps) => {
             />
           </div>
           <div className="pl-4 gap-2 flex flex-col">
-            <div
-              className="underline cursor-pointer"
-              onClick={() => {
-                setUploadImageModal(true);
-              }}
-            >
-              Upload Image
-            </div>
-            <input
-              className={classNames("", {
-                hidden: !uploadImageModal,
-              })}
-              id="image"
-              type="file"
-              accept="image/png, image/jpeg"
-              onChange={(e) => onUploadFile(e, projectId)}
-            />
-            <div className="underline cursor-pointer">
-              Choose from stock library
+            <div>
+              <Dialog>
+                <DialogTrigger className="underline cursor-pointer text-left">
+                  Change Image
+                </DialogTrigger>
+                <DialogContent className="min-w-[500px] min-h-[400px] ">
+                  <Tabs defaultValue="upload" className="w-[200px]">
+                    <TabsList className="min-w-[420px] flex justify-around">
+                      <TabsTrigger value="upload">Upload Image</TabsTrigger>
+                      <TabsTrigger value="stock">Stock Library</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="upload">
+                      <Carousel
+                        className="min-w-[410px] min-h-[250px] p-[20px] pl-[50px]"
+                        opts={{
+                          align: "start",
+                        }}
+                      >
+                        <CarouselContent className="mt-[10%] min-w-[400px] min-h-[100px] p-[20px]">
+                          {Array.from({ length: 5 }).map((_, index) => (
+                            <CarouselItem
+                              key={index}
+                              className="md:basis-1/4 lg:basis-1/3"
+                            >
+                              <img
+                                src={scene.image.imageUrl}
+                                className="object-contain  min-w-[50px] min-h-[50px]"
+                              />
+                              <div>Filename</div>
+                            </CarouselItem>
+                          ))}
+                        </CarouselContent>
+                        <CarouselPrevious className="ml-[8%]" />
+                        <CarouselNext />
+                      </Carousel>
+                      <div className=" max-w-[150px]">
+                        <label
+                          htmlFor="image"
+                          className="p-[10px] bg-slate-200 rounded-sm border-1 cursor-pointer text-sm"
+                        >
+                          Upload from Local
+                        </label>
+                        <input
+                          id="image"
+                          type="file"
+                          style={{ visibility: "hidden" }}
+                          accept="image/png, image/jpeg"
+                          onChange={async (e) => {
+                            const previewUrl = await onUploadFile(e, projectId);
+                            props.onImageUpdate(previewUrl);
+                          }}
+                        />
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="stock">
+                      <div className="underline cursor-pointer">
+                        Choose from stock library
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </DialogContent>
+              </Dialog>
             </div>
             <div className="">
               <CropDialog
@@ -289,6 +354,7 @@ const ScenesPanel = (props: ScenePanelProps) => (
         sceneNo={idx + 1}
         aspect={props.aspect}
         setCrop={(crop) => props.onCropUpdate(scene.id, crop)}
+        onImageUpdate={(imageUrl) => props.onImageUpdate(scene.id, imageUrl)}
       />
     ))}
   </>
@@ -357,7 +423,11 @@ const GlobalPanel = (props: GlobalPanelProps) => {
   );
 };
 
-const EditorPanel = ({ projectData, onCropUpdate }: EditorPanelProps) => {
+const EditorPanel = ({
+  projectData,
+  onCropUpdate,
+  onImageUpdate,
+}: EditorPanelProps) => {
   const [selectedTab, setSelectedTab] = useState<SelectedEditorTab>("scenes");
 
   return (
@@ -371,6 +441,7 @@ const EditorPanel = ({ projectData, onCropUpdate }: EditorPanelProps) => {
           scenes={projectData.scenes}
           aspect={projectData.format.width / projectData.format.height}
           onCropUpdate={onCropUpdate}
+          onImageUpdate={onImageUpdate}
         />
       )}
       {selectedTab === "global" && (
@@ -407,6 +478,23 @@ function SlideshowEditor() {
     });
   };
 
+  const onImageUpdate = (sceneId, imageUrl) => {
+    setProjectData((prev) => {
+      const scenes = prev.scenes.map((s) => {
+        if (s.id === sceneId) {
+          s.image.imageUrl = imageUrl;
+        }
+
+        return s;
+      });
+
+      return {
+        ...prev,
+        scenes,
+      };
+    });
+  };
+
   return (
     <Layout activePage="projects">
       <div className="slideshow-wrapper">
@@ -418,6 +506,7 @@ function SlideshowEditor() {
             <EditorPanel
               projectData={projectData}
               onCropUpdate={onCropUpdate}
+              onImageUpdate={onImageUpdate}
             />
           </div>
           <div className="w-[55%] max-h-screen overflow-y-auto">

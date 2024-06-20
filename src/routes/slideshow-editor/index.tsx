@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+
 import Layout from "../layout";
 import { Film, Layers, Mic, Music } from "lucide-react";
-import { type Crop } from "react-image-crop";
 
 import classNames from "classnames";
 import {
@@ -11,14 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Carousel,
@@ -30,156 +23,37 @@ import {
 
 import CropDialog from "./cropper/crop-dialog";
 import { useParams } from "react-router-dom";
-import { uploadImageToStorage } from "@/src/api/takeone";
-import { ImageAsset } from "@/src/types";
+import {
+  getBgMusicList,
+  getProject,
+  getSlideshow,
+  uploadImageToStorage,
+} from "@/src/api/takeone";
+import { ImageAsset, Slide, Slideshow } from "@/src/types";
 
-interface Project {
-  title: string;
-  format: {
-    name: string;
-    width: number;
-    height: number;
-  };
-  scenes: Scene[];
-  voiceover: {
-    artistName: string;
-    durationMs: string;
-  };
-  backgroundMusic: {
-    artistName: string;
-    durationMs: string;
-  };
-}
+import useEditorStore from "./store";
 
-const SAMPLE_SCENES: Scene[] = [
-  {
-    id: "abcd-1",
-    text: "5 ways to lose weight",
-    image: {
-      id: "k9zPtz",
-      imageUrl: "https://picsum.photos/1000/800",
-      crop: {
-        x: 0,
-        y: 0,
-        width: 200,
-        height: 200,
-        unit: "px",
-      },
-    },
-    voiceoverText:
-      "In our video journey to weight loss, let's delve into five effective strategies to help you shed those extra pounds.",
-  },
-  {
-    id: "abcd-2",
-    text: "1. Stop eating.",
-    image: {
-      id: "jgud2",
-      imageUrl: "https://picsum.photos/1920/1080",
-      crop: {
-        x: 0,
-        y: 0,
-        width: 200,
-        height: 200,
-        unit: "px",
-      },
-    },
-    voiceoverText:
-      "Begin by focusing on a balanced diet filled with fruits, vegetables, lean proteins, and whole grains to provide essential nutrients and keep you satisfied.",
-  },
-  {
-    id: "abcd-3",
-    text: "2. Start excercising",
-    image: {
-      id: "j23d2",
-      imageUrl: "https://picsum.photos/1920/1080",
-      // width: 1920,
-      // height: 1080,
-      crop: {
-        x: 0,
-        y: 0,
-        width: 200,
-        height: 200,
-        unit: "px",
-      },
-    },
-    voiceoverText:
-      "Incorporate regular exercise into your routine, whether it's cardio, strength training, or yoga, to burn calories and boost your metabolism.",
-  },
-];
+import {
+  EditorPanelHeaderProps,
+  EditorPanelProps,
+  GlobalPanelProps,
+  HeaderProps,
+  Scene,
+  ScenePanelProps,
+  SceneProps,
+  SelectedEditorTab,
+  SlideshowPreviewUrlParams,
+} from "./types";
 
-const SAMPLE_PROJECT_DATA: Project = {
-  title: "5 ways to lose weight",
-  format: {
-    name: "widescreen",
-    width: 1920,
-    height: 1080,
-  },
-  scenes: SAMPLE_SCENES,
-  voiceover: {
-    artistName: "Tom Ripley",
-    durationMs: "44000",
-  },
-  backgroundMusic: {
-    artistName: "Marge - The Band",
-    durationMs: "54000",
-  },
-};
+import { createClient } from "pexels";
 
-interface HeaderProps {
-  projectTitle: string;
-}
-
-type SelectedEditorTab = "scenes" | "global";
-
-interface EditorPanelHeaderProps {
-  selectedTab: SelectedEditorTab;
-  setSelectedTab: (selectedTab: SelectedEditorTab) => void;
-}
-
-type SlideshowPreviewUrlParams = {
-  projectId: string;
-};
-
-interface Scene {
-  id: string;
-  text: string;
-  image: {
-    id: string;
-    imageUrl: string;
-    crop: Crop;
-  };
-  voiceoverText: string;
-}
-
-interface SceneProps {
-  scene: Scene;
-  sceneNo: number;
-  aspect: number;
-  setCrop: (crop) => void;
-  onImageUpdate: (imageUrl) => void;
-}
-
-interface ScenePanelProps {
-  scenes: Scene[];
-  aspect: number;
-  onCropUpdate: (sceneId, crop) => void;
-  onImageUpdate: (sceneId, imageUrl) => void;
-}
-
-interface EditorPanelProps {
-  projectData: Project;
-  onCropUpdate: (sceneId, crop) => void;
-  onImageUpdate: (sceneId, imageUrl) => void;
-}
-
-interface GlobalPanelProps {
-  voiceover: String;
-  bgMusic: String;
-}
+const client = createClient(
+  "GHPoQvNj6IJvghqtAhegeuwaK7h45OCLM5JDuhOGVoTnMv2XrhRcs5Fh"
+);
 
 const Header = (props: HeaderProps) => (
   <div className="header flex justify-between p-4 pb-1 h-[59px]">
-    <div className="font-bold text-2xl">{props.projectTitle}</div>
+    <div className="font-bold text-2xl">{props.projectTitle || ""}</div>
     <div>
       <button className="bg-gray-800 text-white py-2 px-2.5 text-xs rounded-sm">
         Export Video
@@ -233,9 +107,27 @@ async function onUploadFile(e, projectId) {
 }
 
 const Scene = (props: SceneProps) => {
-  const { scene, sceneNo } = props;
+  const { slide, sizeFormat, sceneNo, onSlideUpdate } = props;
 
   const { projectId } = useParams<SlideshowPreviewUrlParams>();
+
+  const [query, setQuery] = useState("modern");
+
+  const [photosArray, setPhotosArray] = useState([]);
+  // client.photos.search({ query, per_page: 5 }).then((photos) => {
+  //   setPhotosArray(photos.photos);
+  // });
+
+  const onSearchStock = () => {
+    client.photos.search({ query, per_page: 10 }).then((photos) => {
+      setPhotosArray(photos.photos);
+      console.log(photos.photos);
+    });
+  };
+
+  useEffect(() => {
+    onSearchStock();
+  }, []);
 
   return (
     <div className="border-b-2 p-2 pb-4 text-xs border-gray-200">
@@ -244,7 +136,13 @@ const Scene = (props: SceneProps) => {
         <div className="font-medium pb-1">Text</div>
         <textarea
           className="border-2 rounded-md w-full px-2 py-3 resize-none text-gray-800 focus-visible:border-slate-600 outline-none"
-          value={scene.text}
+          value={slide.text}
+          onChange={(e) => {
+            const newText = e.currentTarget.value;
+            onSlideUpdate({
+              text: newText,
+            });
+          }}
         ></textarea>
       </div>
       <div className="p-1 font-medium">
@@ -252,7 +150,7 @@ const Scene = (props: SceneProps) => {
         <div className="py-2 flex justify-start">
           <div className="bg-gray-200 h-[100px] w-[125px]">
             <img
-              src={scene.image.imageUrl}
+              src={slide.imageAsset.url}
               className="object-contain w-full h-full"
             />
           </div>
@@ -262,15 +160,15 @@ const Scene = (props: SceneProps) => {
                 <DialogTrigger className="underline cursor-pointer text-left">
                   Change Image
                 </DialogTrigger>
-                <DialogContent className="min-w-[500px] min-h-[400px] ">
-                  <Tabs defaultValue="upload" className="w-[200px]">
-                    <TabsList className="min-w-[420px] flex justify-around">
+                <DialogContent className="max-w-[80%] h-[80%] ">
+                  <Tabs defaultValue="upload" className="w-[100%]">
+                    <TabsList className="w-full flex justify-around">
                       <TabsTrigger value="upload">Upload Image</TabsTrigger>
                       <TabsTrigger value="stock">Stock Library</TabsTrigger>
                     </TabsList>
                     <TabsContent value="upload">
                       <Carousel
-                        className="min-w-[410px] min-h-[250px] p-[20px] pl-[50px]"
+                        className=" p-[20px] pl-[50px]"
                         opts={{
                           align: "start",
                         }}
@@ -282,7 +180,7 @@ const Scene = (props: SceneProps) => {
                               className="md:basis-1/4 lg:basis-1/3"
                             >
                               <img
-                                src={scene.image.imageUrl}
+                                src={slide.imageAsset.url}
                                 className="object-contain  min-w-[50px] min-h-[50px]"
                               />
                               <div>Filename</div>
@@ -306,62 +204,137 @@ const Scene = (props: SceneProps) => {
                           accept="image/png, image/jpeg"
                           onChange={async (e) => {
                             const previewUrl = await onUploadFile(e, projectId);
-                            props.onImageUpdate(previewUrl);
+
+                            onSlideUpdate({
+                              imageAsset: {
+                                ...slide.imageAsset,
+                                url: previewUrl,
+                              },
+                            });
                           }}
                         />
                       </div>
                     </TabsContent>
-                    <TabsContent value="stock">
-                      <div className="underline cursor-pointer">
-                        Choose from stock library
+                    <TabsContent value="stock" className="flex flex-col">
+                      <div className="flex items-center space-x-3 h-full">
+                        <input
+                          className="border-gray-200 border-2 rounded mt-[10px] text-center p-2 flex-grow"
+                          type="text"
+                          placeholder="Search Images"
+                          onChange={(e) => {
+                            setQuery(e.currentTarget.value);
+                          }}
+                        />
+                        <button
+                          className="border-gray-200 border-2 rounded mt-[10px]  bg-slate-200 py-2 px-10"
+                          type="submit"
+                          onClick={onSearchStock}
+                        >
+                          Search
+                        </button>
                       </div>
+                      {!!photosArray.length && (
+                        <Carousel
+                          className="py-10 flex items-center flex-grow"
+                          opts={{
+                            align: "start",
+                            containScroll: "keepSnaps",
+                            active: true,
+                          }}
+                        >
+                          <CarouselPrevious className="left-1" />
+                          <div className="px-24 min-h-full">
+                            <CarouselContent className="min-h-full">
+                              {photosArray.map((photo, index) => (
+                                <CarouselItem key={index} className="basis-1/3">
+                                  <div className="">
+                                    <img
+                                      width={"100%"}
+                                      src={photo.src.landscape}
+                                      className="object-cover min-h-[100%]"
+                                    />
+                                  </div>
+                                </CarouselItem>
+                              ))}
+                            </CarouselContent>
+                          </div>
+                          <CarouselNext className="right-1" />
+                        </Carousel>
+                      )}
                     </TabsContent>
                   </Tabs>
                 </DialogContent>
               </Dialog>
             </div>
             <div className="">
-              <CropDialog
-                imageUrl={scene.image.imageUrl}
+              {/* <CropDialog
+                imageUrl={slide.imageAsset.url}
                 cropInit={scene.image.crop}
-                aspect={props.aspect}
-                onSetCrop={props.setCrop}
-              />
+                sizeFormat={sizeFormat}
+                onSetCrop={(crop) => {
+                  onSlideUpdate({
+                    image: {
+                      ...scene.image,
+                      crop,
+                    },
+                  });
+                }}
+              /> */}
             </div>
           </div>
         </div>
       </div>
-      <div className="px-1 py-2">
+      {/* <div className="px-1 py-2">
         <div className="font-medium pb-1">Voiceover Text</div>
         <textarea
           className="border-2 rounded-md w-full px-2 py-3 resize-none text-gray-800 focus-visible:border-slate-600 outline-none"
-          value={scene.voiceoverText}
+          value={slide.voiceoverText}
+          onChange={(e) => {
+            const newText = e.currentTarget.value;
+            onSlideUpdate({
+              voiceoverText: newText,
+            });
+          }}
         ></textarea>
       </div>
 
       <button className="border-2 ml-1 px-2 py-1 rounded-sm border-gray-600 font-medium">
         Regenerate voiceover
-      </button>
+      </button> */}
     </div>
   );
 };
 
 const ScenesPanel = (props: ScenePanelProps) => (
   <>
-    {props.scenes.map((scene, idx) => (
+    {props.slides.map((slide, idx) => (
       <Scene
-        scene={scene}
+        slide={slide}
         sceneNo={idx + 1}
-        aspect={props.aspect}
-        setCrop={(crop) => props.onCropUpdate(scene.id, crop)}
-        onImageUpdate={(imageUrl) => props.onImageUpdate(scene.id, imageUrl)}
+        sizeFormat={props.sizeFormat}
+        onSlideUpdate={(updatedSlide) =>
+          props.onSlideUpdate(slide.id, updatedSlide)
+        }
       />
     ))}
   </>
 );
 
 const GlobalPanel = (props: GlobalPanelProps) => {
-  const { voiceover, bgMusic } = props;
+  const { voiceover, bgMusic, slideshowId } = props;
+  const [showMusicList, setShowMusicList] = useState(false);
+  const [bgMusicList, setBgMusicList] = useState([]);
+
+  useEffect(() => {
+    const fetchBgMusicList = async () => {
+      const musicList = await getBgMusicList(slideshowId);
+      setBgMusicList(musicList);
+    };
+    fetchBgMusicList();
+  }, []);
+
+  const updateBgMusic = () => {};
+
   return (
     <div>
       <div className="p-2 font-medium text-xs">Theme</div>
@@ -414,7 +387,32 @@ const GlobalPanel = (props: GlobalPanelProps) => {
             <div className="font-normal pl-2 pt-1">{bgMusic}</div>
           </div>
           <div className="flex flex-col w-[50%]">
-            <a className="underline cursor-pointer ">Change voice</a>
+            <a
+              className="underline cursor-pointer "
+              onClick={() => setShowMusicList(true)}
+            >
+              Change music
+            </a>
+            {showMusicList && (
+              <div className="h-[200px] w-[200px] overflow-auto">
+                <ul>
+                  {bgMusicList.map((musicFile) => {
+                    return (
+                      <div className="h-[50px]">
+                        <li
+                          className="border-2 rounded-md"
+                          onClick={() => {
+                            updateBgMusic();
+                          }}
+                        >
+                          {musicFile.originalFileName} by {musicFile.artist}
+                        </li>
+                      </div>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
             <a className="underline cursor-pointer pt-1 ">Disable music</a>
           </div>
         </div>
@@ -423,13 +421,10 @@ const GlobalPanel = (props: GlobalPanelProps) => {
   );
 };
 
-const EditorPanel = ({
-  projectData,
-  onCropUpdate,
-  onImageUpdate,
-}: EditorPanelProps) => {
+const EditorPanel = ({ slideshow, onSlideUpdate }: EditorPanelProps) => {
   const [selectedTab, setSelectedTab] = useState<SelectedEditorTab>("scenes");
 
+  if (!slideshow) return;
   return (
     <>
       <EditorPanelHeader
@@ -438,16 +433,16 @@ const EditorPanel = ({
       />
       {selectedTab === "scenes" && (
         <ScenesPanel
-          scenes={projectData.scenes}
-          aspect={projectData.format.width / projectData.format.height}
-          onCropUpdate={onCropUpdate}
-          onImageUpdate={onImageUpdate}
+          slides={slideshow.slides}
+          sizeFormat={slideshow.settings.sizeFormat}
+          onSlideUpdate={onSlideUpdate}
         />
       )}
       {selectedTab === "global" && (
         <GlobalPanel
-          voiceover={projectData.voiceover.artistName}
-          bgMusic={projectData.backgroundMusic.artistName}
+          voiceover={"Artist Name 1"}
+          bgMusic={slideshow.backgroundMusic.audioAsset.artist}
+          slideshowId={slideshow.id}
         />
       )}
     </>
@@ -458,56 +453,63 @@ const PreviewPanel = () => {
   return <div></div>;
 };
 
-function SlideshowEditor() {
-  const [projectData, setProjectData] = useState<Project>(SAMPLE_PROJECT_DATA);
+const SlideshowEditor = () => {
+  const { projectId } = useParams<SlideshowPreviewUrlParams>();
 
-  const onCropUpdate = (sceneId, crop) => {
-    setProjectData((prev) => {
-      const scenes = prev.scenes.map((s) => {
-        if (s.id === sceneId) {
-          s.image.crop = crop;
-        }
+  //Q: Is there a way to get all states from store together?
+  const prompt = useEditorStore((state) => state.prompt);
+  const slideshow: Slideshow = useEditorStore((state) => state.slideshow);
 
-        return s;
-      });
+  const updatePrompt = useEditorStore((state) => state.updatePrompt);
+  const updateSlideshow = useEditorStore((state) => state.updateSlideshow);
 
-      return {
-        ...prev,
-        scenes,
-      };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [projectData, slideshowData] = await Promise.all([
+          getProject(projectId),
+          getSlideshow(projectId),
+        ]);
+
+        //Q: Is it possible to update all three states togehter?
+        updatePrompt(projectData.prompt);
+        updateSlideshow(slideshowData);
+      } catch (error) {
+        console.error("Failed to fetch project:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const onSlideUpdate = (slideId: number, updatedSlide: Partial<Slide>) => {
+    const slides = slideshow.slides.map((slide) => {
+      if (slide.id === slideId) {
+        slide = {
+          ...slide,
+          ...updatedSlide,
+        };
+      }
+      return slide;
     });
-  };
 
-  const onImageUpdate = (sceneId, imageUrl) => {
-    setProjectData((prev) => {
-      const scenes = prev.scenes.map((s) => {
-        if (s.id === sceneId) {
-          s.image.imageUrl = imageUrl;
-        }
+    const newSlideshowData = {
+      ...slideshow,
+      slides,
+    };
 
-        return s;
-      });
-
-      return {
-        ...prev,
-        scenes,
-      };
-    });
+    updateSlideshow(newSlideshowData);
   };
 
   return (
     <Layout activePage="projects">
       <div className="slideshow-wrapper">
-        <Header projectTitle={projectData.title} />
+        <Header projectTitle={prompt} />
         <hr className="h-[1px] bg-gray-200 border-0"></hr>
 
         <div className="flex flex-row h-[calc(100vh-59px)]">
           <div className="w-[45%] h-full flex max-h-screen overflow-y-auto flex-col flex-grow border-r-2 border-gray-200">
-            <EditorPanel
-              projectData={projectData}
-              onCropUpdate={onCropUpdate}
-              onImageUpdate={onImageUpdate}
-            />
+            <EditorPanel slideshow={slideshow} onSlideUpdate={onSlideUpdate} />
           </div>
           <div className="w-[55%] max-h-screen overflow-y-auto">
             <PreviewPanel />
@@ -516,6 +518,6 @@ function SlideshowEditor() {
       </div>
     </Layout>
   );
-}
+};
 
 export default SlideshowEditor;

@@ -222,3 +222,16 @@ export async function saveSlideshowSettings(
   }
   return slideshow;
 }
+
+export async function getBgMusicList(slideshowId) {
+  const response = await fetch(
+    `${process.env.BACKEND_API_HOST}/${slideshowId}/bgMusicList`
+  );
+  const { success, bgMusicList } = await response.json();
+
+  if (!success) {
+    throw new Error("Failed to fetch bg music list");
+  }
+
+  return bgMusicList;
+}

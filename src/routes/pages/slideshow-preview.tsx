@@ -64,7 +64,9 @@ export default function SlideshowPreview() {
   }, [projectId]);
 
   const handleExportVideo = async () => {};
-  const handleOpenEditor = async () => {};
+  const handleOpenEditor = async () => {
+    window.open(`/projects/${projectId}/editor`, "_self");
+  };
 
   const handleSaveChanges = async () => {
     try {

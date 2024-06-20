@@ -29,9 +29,11 @@ export type AudioAsset = {
   id: number;
   url: string;
   duration: number;
+  artist: string;
 };
 
 export type Slide = {
+  id: number;
   headingText: string;
   text: string;
   imageAsset: ImageAsset;

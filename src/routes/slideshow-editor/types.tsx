@@ -57,6 +57,23 @@ export interface ScenePanelProps {
   onSlideUpdate: (slideId, updatedSlide: Partial<Slide>) => void;
 }
 
+export type BackgroundMusicFileType = {
+  id: string;
+  originalFileName: string;
+  storageIdentifier: string;
+  category: string;
+  artist: string;
+  duration: number;
+  tags: string[];
+  timestamp: string;
+  imageUrl: string;
+};
+
+export interface BGMusicSelectProps {
+  bgMusicList: BackgroundMusicFileType[];
+  updateBgMusic: () => void;
+}
+
 export interface EditorPanelProps {
   slideshow: Slideshow;
   onSlideUpdate: (slideId: number, updatedSlide: Partial<Slide>) => void;

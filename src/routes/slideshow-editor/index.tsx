@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
 
 import Layout from "../layout";
-import { Film, Layers, Mic, Music } from "lucide-react";
+import {
+  CirclePause,
+  CirclePlay,
+  Film,
+  Layers,
+  Mic,
+  Music,
+} from "lucide-react";
 
 import classNames from "classnames";
 import {
@@ -11,7 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Carousel,
@@ -34,6 +48,7 @@ import { ImageAsset, Slide, Slideshow } from "@/src/types";
 import useEditorStore from "./store";
 
 import {
+  BGMusicSelectProps,
   EditorPanelHeaderProps,
   EditorPanelProps,
   GlobalPanelProps,
@@ -46,6 +61,7 @@ import {
 } from "./types";
 
 import { createClient } from "pexels";
+import { millisToMinutesAndSeconds } from "@/src/utils/general";
 
 const client = createClient(
   "GHPoQvNj6IJvghqtAhegeuwaK7h45OCLM5JDuhOGVoTnMv2XrhRcs5Fh"
@@ -320,6 +336,85 @@ const ScenesPanel = (props: ScenePanelProps) => (
   </>
 );
 
+const BGMusicSelect = (props: BGMusicSelectProps) => {
+  const { bgMusicList, updateBgMusic } = props;
+
+  const [playingMusic, setPlayingMusic] = useState<null | string>(null);
+
+  return (
+    <Dialog>
+      <DialogTrigger className="text-left underline">
+        Change Music
+      </DialogTrigger>
+      <DialogContent className="max-w-[60%] h-[80%]">
+        <DialogHeader>
+          <DialogTitle>Select Background Music</DialogTitle>
+          <DialogDescription>
+            Enhance your video with the perfect soundtrack: Browse, preview, and
+            apply from the curated list of soundtracks.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="overflow-auto">
+          {bgMusicList.map((musicFile, idx) => {
+            const songName = musicFile.originalFileName.split(".")[0];
+            return (
+              <div className="relative group flex gap-10 items-center m-2 mx-7 py-2 px-4 border border-solid rounded-md hover:bg-gray-100 transition ease-in-out">
+                {idx < 3 && (
+                  <div className="absolute px-2 py-[2px] right-0 top-2 bg-violet-300 text-violet-700 text-xs font-normal rounded-l-sm">
+                    Recommended
+                  </div>
+                )}
+                <button
+                  className="flex-none"
+                  onClick={() => {
+                    if (playingMusic) {
+                      setPlayingMusic(null);
+                    } else {
+                      setPlayingMusic(musicFile.id);
+                    }
+                  }}
+                >
+                  {playingMusic === musicFile.id ? (
+                    <CirclePause height={"30px"} width={"30px"} />
+                  ) : (
+                    <CirclePlay height={"30px"} width={"30px"} />
+                  )}
+                </button>
+                <div className="grow">
+                  <div>{songName}</div>
+                  <div className="text-gray-400 italic text-sm">
+                    By {musicFile.artist}
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    {musicFile.tags.map((tag) => {
+                      return (
+                        <div className="bg-gray-200 rounded-sm px-3 py-1 text-sm text-gray-700 ">
+                          {tag}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <button
+                  className="opacity-0 flex-none bg-blue-600 text-white px-4 py-1 rounded-full font-extralight text-sm group-hover:opacity-100 transition ease-in-out mr-10"
+                  onClick={() => {
+                    updateBgMusic();
+                  }}
+                >
+                  Apply
+                </button>
+                <div className="flex-none">
+                  {millisToMinutesAndSeconds(musicFile.duration)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const GlobalPanel = (props: GlobalPanelProps) => {
   const { voiceover, bgMusic, slideshowId } = props;
   const [showMusicList, setShowMusicList] = useState(false);
@@ -387,32 +482,10 @@ const GlobalPanel = (props: GlobalPanelProps) => {
             <div className="font-normal pl-2 pt-1">{bgMusic}</div>
           </div>
           <div className="flex flex-col w-[50%]">
-            <a
-              className="underline cursor-pointer "
-              onClick={() => setShowMusicList(true)}
-            >
-              Change music
-            </a>
-            {showMusicList && (
-              <div className="h-[200px] w-[200px] overflow-auto">
-                <ul>
-                  {bgMusicList.map((musicFile) => {
-                    return (
-                      <div className="h-[50px]">
-                        <li
-                          className="border-2 rounded-md"
-                          onClick={() => {
-                            updateBgMusic();
-                          }}
-                        >
-                          {musicFile.originalFileName} by {musicFile.artist}
-                        </li>
-                      </div>
-                    );
-                  })}
-                </ul>
-              </div>
-            )}
+            <BGMusicSelect
+              bgMusicList={bgMusicList}
+              updateBgMusic={updateBgMusic}
+            />
             <a className="underline cursor-pointer pt-1 ">Disable music</a>
           </div>
         </div>

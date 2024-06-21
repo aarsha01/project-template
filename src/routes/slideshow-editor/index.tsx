@@ -355,6 +355,7 @@ const BGMusicSelect = (props: BGMusicSelectProps) => {
           </DialogDescription>
         </DialogHeader>
         <div className="overflow-auto">
+          {playingMusic && <audio src={playingMusic} autoPlay={true}></audio>}
           {bgMusicList.map((musicFile, idx) => {
             const songName = musicFile.originalFileName.split(".")[0]; //Remove extension from filename
             return (
@@ -362,14 +363,14 @@ const BGMusicSelect = (props: BGMusicSelectProps) => {
                 <button
                   className="flex-none ml-2 px-2"
                   onClick={() => {
-                    if (playingMusic == musicFile.id) {
+                    if (playingMusic == musicFile.audioPreviewUrl) {
                       setPlayingMusic(null);
                     } else {
-                      setPlayingMusic(musicFile.id);
+                      setPlayingMusic(musicFile.audioPreviewUrl);
                     }
                   }}
                 >
-                  {playingMusic === musicFile.id ? (
+                  {playingMusic === musicFile.audioPreviewUrl ? (
                     <CirclePause height={"30px"} width={"30px"} />
                   ) : (
                     <CirclePlay height={"30px"} width={"30px"} />

@@ -67,6 +67,7 @@ export type BackgroundMusicFileType = {
   tags: string[];
   timestamp: string;
   imageUrl: string;
+  audioPreviewUrl: string;
 };
 
 export interface BGMusicSelectProps {

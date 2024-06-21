@@ -63,7 +63,7 @@ import {
 import { createClient } from "pexels";
 import { millisToMinutesAndSeconds } from "@/src/utils/general";
 
-const client = createClient(
+const pexelsClient = createClient(
   "GHPoQvNj6IJvghqtAhegeuwaK7h45OCLM5JDuhOGVoTnMv2XrhRcs5Fh"
 );
 
@@ -130,12 +130,12 @@ const Scene = (props: SceneProps) => {
   const [query, setQuery] = useState("modern");
 
   const [photosArray, setPhotosArray] = useState([]);
-  // client.photos.search({ query, per_page: 5 }).then((photos) => {
+  // pexelsClient.photos.search({ query, per_page: 5 }).then((photos) => {
   //   setPhotosArray(photos.photos);
   // });
 
   const onSearchStock = () => {
-    client.photos.search({ query, per_page: 10 }).then((photos) => {
+    pexelsClient.photos.search({ query, per_page: 10 }).then((photos) => {
       setPhotosArray(photos.photos);
       console.log(photos.photos);
     });
@@ -356,18 +356,13 @@ const BGMusicSelect = (props: BGMusicSelectProps) => {
         </DialogHeader>
         <div className="overflow-auto">
           {bgMusicList.map((musicFile, idx) => {
-            const songName = musicFile.originalFileName.split(".")[0];
+            const songName = musicFile.originalFileName.split(".")[0]; //Remove extension from filename
             return (
-              <div className="relative group flex gap-10 items-center m-2 mx-7 py-2 px-4 border border-solid rounded-md hover:bg-gray-100 transition ease-in-out">
-                {idx < 3 && (
-                  <div className="absolute px-2 py-[2px] right-0 top-2 bg-violet-300 text-violet-700 text-xs font-normal rounded-l-sm">
-                    Recommended
-                  </div>
-                )}
+              <div className="relative group flex gap-5 items-center m-2 mx-7 py-2 px-4 border border-solid rounded-md hover:bg-gray-100 transition ease-in-out">
                 <button
-                  className="flex-none"
+                  className="flex-none ml-2 px-2"
                   onClick={() => {
-                    if (playingMusic) {
+                    if (playingMusic == musicFile.id) {
                       setPlayingMusic(null);
                     } else {
                       setPlayingMusic(musicFile.id);
@@ -406,6 +401,11 @@ const BGMusicSelect = (props: BGMusicSelectProps) => {
                 <div className="flex-none">
                   {millisToMinutesAndSeconds(musicFile.duration)}
                 </div>
+                {idx < 3 && (
+                  <div className="absolute px-2 py-[2px] right-0 top-2 bg-violet-300 text-violet-700 text-xs font-normal rounded-l-sm">
+                    Recommended
+                  </div>
+                )}
               </div>
             );
           })}

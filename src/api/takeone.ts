@@ -235,24 +235,3 @@ export async function getBgMusicList(slideshowId) {
 
   return bgMusicList;
 }
-
-export async function regenerateVoiceover(text) {
-  const response = await fetch(
-    `${process.env.BACKEND_API_HOST}/regenerateVoiceover`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ text }),
-    }
-  );
-
-  const { success, regeneratedText } = await response.json();
-
-  if (!success) {
-    throw new Error("Failed to regenerate text");
-  }
-
-  return regeneratedText;
-}

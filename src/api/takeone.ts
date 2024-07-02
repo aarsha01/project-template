@@ -1,4 +1,4 @@
-import { ImageAsset, Project, Script, SizeFormat, Slideshow } from "../types";
+import { ImageAsset, Project, SizeFormat, Slideshow } from "../types";
 import md5 from "crypto-js/md5";
 
 type CreateProjectResponse = {

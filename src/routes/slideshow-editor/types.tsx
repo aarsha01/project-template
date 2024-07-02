@@ -68,11 +68,12 @@ export type BackgroundMusicFileType = {
   timestamp: string;
   imageUrl: string;
   audioPreviewUrl: string;
+  recommended?: boolean;
 };
 
 export interface BGMusicSelectProps {
   bgMusicList: BackgroundMusicFileType[];
-  updateBgMusic: () => void;
+  updateBgMusic: (musicId, songName, artist) => void;
 }
 
 export interface EditorPanelProps {

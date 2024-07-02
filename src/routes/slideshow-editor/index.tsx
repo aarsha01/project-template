@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -41,6 +42,7 @@ import {
   getBgMusicList,
   getProject,
   getSlideshow,
+  regenerateVoiceover,
   uploadImageToStorage,
 } from "@/src/api/takeone";
 import { ImageAsset, Slide, Slideshow } from "@/src/types";
@@ -137,8 +139,11 @@ const Scene = (props: SceneProps) => {
   const onSearchStock = () => {
     pexelsClient.photos.search({ query, per_page: 10 }).then((photos) => {
       setPhotosArray(photos.photos);
-      console.log(photos.photos);
     });
+  };
+
+  const onClickRegenerateVoicever = (text) => {
+    regenerateVoiceover(text);
   };
 
   useEffect(() => {
@@ -300,11 +305,11 @@ const Scene = (props: SceneProps) => {
           </div>
         </div>
       </div>
-      {/* <div className="px-1 py-2">
+      <div className="px-1 py-2">
         <div className="font-medium pb-1">Voiceover Text</div>
         <textarea
           className="border-2 rounded-md w-full px-2 py-3 resize-none text-gray-800 focus-visible:border-slate-600 outline-none"
-          value={slide.voiceoverText}
+          value={slide.text}
           onChange={(e) => {
             const newText = e.currentTarget.value;
             onSlideUpdate({
@@ -314,9 +319,12 @@ const Scene = (props: SceneProps) => {
         ></textarea>
       </div>
 
-      <button className="border-2 ml-1 px-2 py-1 rounded-sm border-gray-600 font-medium">
+      <button
+        className="border-2 ml-1 px-2 py-1 rounded-sm border-gray-600 font-medium"
+        onClick={() => onClickRegenerateVoicever(slide.text)}
+      >
         Regenerate voiceover
-      </button> */}
+      </button>
     </div>
   );
 };
@@ -325,6 +333,7 @@ const ScenesPanel = (props: ScenePanelProps) => (
   <>
     {props.slides.map((slide, idx) => (
       <Scene
+        key={`scene-${slide.id}`}
         slide={slide}
         sceneNo={idx + 1}
         sizeFormat={props.sizeFormat}
@@ -346,7 +355,7 @@ const BGMusicSelect = (props: BGMusicSelectProps) => {
       <DialogTrigger className="text-left underline">
         Change Music
       </DialogTrigger>
-      <DialogContent className="max-w-[60%] h-[80%]">
+      <DialogContent className="h-[80%] max-w-[90%] md:max-w-[80%] lg:max-w-[60%]">
         <DialogHeader>
           <DialogTitle>Select Background Music</DialogTitle>
           <DialogDescription>
@@ -356,10 +365,13 @@ const BGMusicSelect = (props: BGMusicSelectProps) => {
         </DialogHeader>
         <div className="overflow-auto">
           {playingMusic && <audio src={playingMusic} autoPlay={true}></audio>}
-          {bgMusicList.map((musicFile, idx) => {
+          {bgMusicList.map((musicFile) => {
             const songName = musicFile.originalFileName.split(".")[0]; //Remove extension from filename
             return (
-              <div className="relative group flex gap-5 items-center m-2 mx-7 py-2 px-4 border border-solid rounded-md hover:bg-gray-100 transition ease-in-out">
+              <div
+                key={`music-${musicFile.id}`}
+                className="relative group flex gap-5 items-center m-2 mx-7 py-2 px-4 border border-solid rounded-md hover:bg-gray-100 transition ease-in-out"
+              >
                 <button
                   className="flex-none ml-2 px-2"
                   onClick={() => {
@@ -384,25 +396,34 @@ const BGMusicSelect = (props: BGMusicSelectProps) => {
                   <div className="flex gap-2 pt-2">
                     {musicFile.tags.map((tag) => {
                       return (
-                        <div className="bg-gray-200 rounded-sm px-3 py-1 text-sm text-gray-700 ">
+                        <div
+                          key={tag}
+                          className="bg-gray-200 rounded-sm px-3 py-1 text-sm text-gray-700 "
+                        >
                           {tag}
                         </div>
                       );
                     })}
                   </div>
                 </div>
-                <button
-                  className="opacity-0 flex-none bg-blue-600 text-white px-4 py-1 rounded-full font-extralight text-sm group-hover:opacity-100 transition ease-in-out mr-10"
-                  onClick={() => {
-                    updateBgMusic();
-                  }}
-                >
-                  Apply
-                </button>
+                <DialogClose>
+                  <button
+                    className="opacity-0 flex-none bg-blue-600 text-white px-4 py-1 rounded-full font-extralight text-sm group-hover:opacity-100 transition ease-in-out mr-14"
+                    onClick={() => {
+                      setPlayingMusic(null);
+                      updateBgMusic(
+                        musicFile.originalFileName,
+                        musicFile.artist
+                      );
+                    }}
+                  >
+                    Apply
+                  </button>
+                </DialogClose>
                 <div className="flex-none">
                   {millisToMinutesAndSeconds(musicFile.duration)}
                 </div>
-                {idx < 3 && (
+                {!!musicFile.recommended && (
                   <div className="absolute px-2 py-[2px] right-0 top-2 bg-violet-300 text-violet-700 text-xs font-normal rounded-l-sm">
                     Recommended
                   </div>
@@ -418,8 +439,13 @@ const BGMusicSelect = (props: BGMusicSelectProps) => {
 
 const GlobalPanel = (props: GlobalPanelProps) => {
   const { voiceover, bgMusic, slideshowId } = props;
-  const [showMusicList, setShowMusicList] = useState(false);
   const [bgMusicList, setBgMusicList] = useState([]);
+
+  const bgMusicDetail = useEditorStore((state) => state.backgroundMusicArtist);
+
+  const updateBackgroundMusicArtist = useEditorStore(
+    (state) => state.updateBackgroundMusicArtist
+  );
 
   useEffect(() => {
     const fetchBgMusicList = async () => {
@@ -429,7 +455,9 @@ const GlobalPanel = (props: GlobalPanelProps) => {
     fetchBgMusicList();
   }, []);
 
-  const updateBgMusic = () => {};
+  const updateBgMusic = (songName, artist) => {
+    updateBackgroundMusicArtist(songName, artist);
+  };
 
   return (
     <div>
@@ -480,7 +508,7 @@ const GlobalPanel = (props: GlobalPanelProps) => {
         <div className="flex flex-row p-4 gap-10 w-[90%] ">
           <div className="flex items-center w-[50%] ">
             <Music width={"18px"} />
-            <div className="font-normal pl-2 pt-1">{bgMusic}</div>
+            <div className="font-normal pl-2 pt-1">{bgMusicDetail}</div>
           </div>
           <div className="flex flex-col w-[50%]">
             <BGMusicSelect
@@ -497,6 +525,11 @@ const GlobalPanel = (props: GlobalPanelProps) => {
 
 const EditorPanel = ({ slideshow, onSlideUpdate }: EditorPanelProps) => {
   const [selectedTab, setSelectedTab] = useState<SelectedEditorTab>("scenes");
+  const bgMusicArtistName = useEditorStore(
+    (state) => state.backgroundMusicArtist
+  );
+
+  console.log("Slideshow", slideshow);
 
   if (!slideshow) return;
   return (
@@ -536,6 +569,9 @@ const SlideshowEditor = () => {
 
   const updatePrompt = useEditorStore((state) => state.updatePrompt);
   const updateSlideshow = useEditorStore((state) => state.updateSlideshow);
+  const updateBackgroundMusicArtist = useEditorStore(
+    (state) => state.updateBackgroundMusicArtist
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -545,9 +581,12 @@ const SlideshowEditor = () => {
           getSlideshow(projectId),
         ]);
 
-        //Q: Is it possible to update all three states togehter?
+        //Q: Is it possible to update all three states together?
         updatePrompt(projectData.prompt);
         updateSlideshow(slideshowData);
+        updateBackgroundMusicArtist(
+          slideshowData.backgroundMusic.audioAsset.artist
+        );
       } catch (error) {
         console.error("Failed to fetch project:", error);
       }

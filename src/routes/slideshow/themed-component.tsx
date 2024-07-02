@@ -51,7 +51,7 @@ export function SlideshowThemedComponent({
       <Audio
         pauseWhenBuffering
         key="background-music"
-        src={slideshow.backgroundMusic.audioAsset.url}
+        src={slideshow.backgroundMusicAudio.url}
         volume={0.3}
         startFrom={0}
       />

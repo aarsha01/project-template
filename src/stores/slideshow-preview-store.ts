@@ -24,7 +24,7 @@ function getActions(set, get) {
     changeSizeFormat: (sizeFormat: SizeFormat) => set({ sizeFormat }),
     setSlideshow: (slideshow: Slideshow) => {
       set({ slideshow });
-      set({ sizeFormat: slideshow.settings.sizeFormat });
+      set({ sizeFormat: slideshow.sizeFormat });
     },
     initializeSlideshowPreviewStore: () => set(getInitialVariables()),
     saveSlideshowChanges: async () => {
@@ -49,5 +49,5 @@ export const useSlideshowPreviewStore = create<SlideshowPreviewState>()(
 export function useSlideshowPreviewStoreHasChanges() {
   const slideshow = useSlideshowPreviewStore((state) => state.slideshow);
   const sizeFormat = useSlideshowPreviewStore((state) => state.sizeFormat);
-  return sizeFormat !== slideshow?.settings.sizeFormat;
+  return sizeFormat !== slideshow?.sizeFormat;
 }

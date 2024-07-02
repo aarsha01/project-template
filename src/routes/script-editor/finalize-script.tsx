@@ -17,9 +17,7 @@ export function FinalizeScript({
     async function fetchScript() {
       try {
         const project = await getProject(projectId);
-        setSlideTexts(
-          project.currentScript.slideTextDescriptors.map((st) => st.content)
-        );
+        setSlideTexts(project.slideTextDescriptors);
       } catch (error) {
         console.error(error);
       }

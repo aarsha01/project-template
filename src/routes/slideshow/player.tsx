@@ -19,6 +19,8 @@ const MAX_HEIGHT = 720;
 
 export function SlideshowPlayer({ slideshow, sizeFormat }: Props) {
   const durationInFrames = Math.floor(getSlideshowDuration(slideshow) * FPS);
+
+  console.log("durationInFrames", durationInFrames);
   const [ref, { width: containerWidth }] = useMeasure();
 
   const aspectRatio = getAspectRatio(sizeFormat);

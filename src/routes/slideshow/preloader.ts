@@ -9,7 +9,7 @@ export function useSlideshowPreloader(slideshow: Slideshow) {
   useEffect(() => {
     const images = slideshow.slides.flatMap((slide) => slide.imageAsset.url);
     const audio = slideshow.slides.flatMap((slide) => slide.audioAsset.url);
-    const backgroundMusic = slideshow.backgroundMusic.audioAsset.url;
+    const backgroundMusic = slideshow.backgroundMusicAudio.url;
 
     images.forEach((url) => {
       if (preloadedAssetsRef.current.has(url)) {

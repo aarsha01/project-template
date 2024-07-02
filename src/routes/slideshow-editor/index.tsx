@@ -508,14 +508,14 @@ const EditorPanel = ({ slideshow, onSlideUpdate }: EditorPanelProps) => {
       {selectedTab === "scenes" && (
         <ScenesPanel
           slides={slideshow.slides}
-          sizeFormat={slideshow.settings.sizeFormat}
+          sizeFormat={slideshow.sizeFormat}
           onSlideUpdate={onSlideUpdate}
         />
       )}
       {selectedTab === "global" && (
         <GlobalPanel
           voiceover={"Artist Name 1"}
-          bgMusic={slideshow.backgroundMusic.audioAsset.artist}
+          bgMusic={slideshow.backgroundMusicAudio.artist}
           slideshowId={slideshow.id}
         />
       )}

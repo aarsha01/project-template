@@ -8,13 +8,7 @@ export type Project = {
   id: number;
   prompt: string;
   status: ProjectStatus;
-  currentScript: Script;
-};
-
-export type Script = {
-  slideTextDescriptors: {
-    content: string;
-  }[];
+  slideTextDescriptors: string[];
 };
 
 export type ImageAsset = {
@@ -51,13 +45,8 @@ export type SizeFormat = (typeof SIZE_FORMATS)[number];
 export type Slideshow = {
   id: number;
   slides: Slide[];
-  backgroundMusic: {
-    id: number;
-    audioAsset: AudioAsset;
-  };
-  settings: {
-    sizeFormat: SizeFormat;
-  };
+  backgroundMusicAudio: AudioAsset;
+  sizeFormat: SizeFormat;
 };
 
 export type SlideshowTimingInfo = {

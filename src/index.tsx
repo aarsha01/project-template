@@ -6,7 +6,6 @@ import { Toaster } from "@/components/ui/toaster";
 // Clear the existing HTML content
 document.body.innerHTML = '<div id="app" class="h-full"></div>';
 
-// Render your React component instead
 const root = createRoot(document.getElementById("app"));
 root.render(
   <StrictMode>

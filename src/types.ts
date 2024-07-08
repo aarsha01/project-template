@@ -40,13 +40,17 @@ export const SIZE_FORMATS = [
   "STORY_9_16",
   "VERTICAL_4_5",
 ] as const;
+
 export type SizeFormat = (typeof SIZE_FORMATS)[number];
+
+export type VoiceType = "MALE" | "FEMALE";
 
 export type Slideshow = {
   id: number;
   slides: Slide[];
   backgroundMusicAudio: AudioAsset;
   sizeFormat: SizeFormat;
+  voiceType: VoiceType;
 };
 
 export type SlideshowTimingInfo = {

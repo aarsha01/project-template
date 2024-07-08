@@ -235,3 +235,21 @@ export async function getBgMusicList(slideshowId) {
 
   return bgMusicList;
 }
+
+export async function getRegeneratedVoiceType(slideshowId, gender) {
+  const response = await fetch(
+    `${process.env.BACKEND_API_HOST}/${slideshowId}/regenerateVoiceType`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ gender }),
+    }
+  );
+  const { success } = await response.json();
+
+  if (!success) {
+    throw new Error("Failed to fetch updated voicetype");
+  }
+}

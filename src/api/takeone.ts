@@ -196,7 +196,7 @@ async function uploadFileViaSignedUrl(file: File, uploadUrl: string) {
 }
 
 export async function saveSlideshowSettings(
-  slideshowId: string,
+  slideshowId: number,
   settings: { sizeFormat: SizeFormat }
 ) {
   const response = await fetch(
@@ -247,9 +247,75 @@ export async function getRegeneratedVoiceType(slideshowId, gender) {
       body: JSON.stringify({ gender }),
     }
   );
-  const { success } = await response.json();
+  const { success, message } = await response.json();
 
-  if (!success) {
-    throw new Error("Failed to fetch updated voicetype");
-  }
+  return { success, message };
+}
+
+export async function getUpdatedBgMusic(slideshowId, musicFile) {
+  const response = await fetch(
+    `${process.env.BACKEND_API_HOST}/${slideshowId}/updateBgMusic`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ musicFile }),
+    }
+  );
+  const {
+    success,
+    data: backgroundMusicAudio,
+    message,
+  } = await response.json();
+
+  return { success, backgroundMusicAudio, message };
+}
+
+export async function getdisabledBgMusic(slideshowId) {
+  const response = await fetch(
+    `${process.env.BACKEND_API_HOST}/${slideshowId}/disableBgMusic`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  const { success, message } = await response.json();
+  return { success, message };
+}
+
+export async function regenerateSlideVoiceover(
+  slideId,
+  voiceoverText,
+  voiceType
+) {
+  const response = await fetch(
+    `${process.env.BACKEND_API_HOST}/regenerateSlideVoiceover`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ slideId, voiceoverText, voiceType }),
+    }
+  );
+  const { success, message } = await response.json();
+  return { success, message };
+}
+
+export async function updateSlideText(slideId, newSlideText) {
+  const response = await fetch(
+    `${process.env.BACKEND_API_HOST}/updateSlideText`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ slideId, newSlideText }),
+    }
+  );
+  const { success, message } = await response.json();
+  return { success, message };
 }

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
 
 import Layout from "../layout";
 import {
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -42,6 +44,11 @@ import {
   getProject,
   getRegeneratedVoiceType,
   getSlideshow,
+  getUpdatedBgMusic,
+  getdisabledBgMusic,
+  regenerateSlideVoiceover,
+  saveSlideshowSettings,
+  updateSlideText,
   uploadImageToStorage,
 } from "@/src/api/takeone";
 import { ImageAsset, Slide, Slideshow, VoiceType } from "@/src/types";
@@ -63,6 +70,7 @@ import {
 
 import { createClient } from "pexels";
 import { millisToMinutesAndSeconds } from "@/src/utils/general";
+const notify = (value) => toast(value);
 
 const pexelsClient = createClient(
   "GHPoQvNj6IJvghqtAhegeuwaK7h45OCLM5JDuhOGVoTnMv2XrhRcs5Fh"
@@ -131,14 +139,14 @@ const Scene = (props: SceneProps) => {
   const [query, setQuery] = useState("modern");
 
   const [photosArray, setPhotosArray] = useState([]);
-  // pexelsClient.photos.search({ query, per_page: 5 }).then((photos) => {
-  //   setPhotosArray(photos.photos);
-  // });
+
+  const [enableRegenerateButton, setEnableRegenrateButton] = useState(false);
+  const [generatingSlideVoiceover, setGeneratingSlideVoiceover] =
+    useState(false);
 
   const onSearchStock = () => {
     pexelsClient.photos.search({ query, per_page: 10 }).then((photos) => {
       setPhotosArray(photos.photos);
-      console.log(photos.photos);
     });
   };
 
@@ -146,11 +154,37 @@ const Scene = (props: SceneProps) => {
     onSearchStock();
   }, []);
 
+  const slideshow = useEditorStore((state) => state.slideshow);
+
+  const onClickRegenerateSlideVoiceover = async () => {
+    const response = await regenerateSlideVoiceover(
+      slide.id,
+      slide.voiceoverText,
+      slideshow.voiceType
+    );
+    if (response.success) {
+      setGeneratingSlideVoiceover(false);
+    } else {
+      setGeneratingSlideVoiceover(false);
+      notify(response.message);
+    }
+  };
+  const timeoutId = useRef(null);
+  const onChangeSlideText = (newText) => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId.current);
+    }
+    timeoutId.current = setTimeout(async () => {
+      const updatedSlideText = await updateSlideText(slide.id, newText);
+      clearTimeout(timeoutId.current);
+    }, 3000);
+  };
+
   return (
     <div className="border-b-2 p-2 pb-4 text-xs border-gray-200">
       <div className=" text-gray-600">Scene {sceneNo}</div>
       <div className="px-1 py-2">
-        <div className="font-medium pb-1">Text</div>
+        <div className="font-medium pb-1">updateSlideText</div>
         <textarea
           className="border-2 rounded-md w-full px-2 py-3 resize-none text-gray-800 focus-visible:border-slate-600 outline-none"
           value={slide.text}
@@ -159,6 +193,7 @@ const Scene = (props: SceneProps) => {
             onSlideUpdate({
               text: newText,
             });
+            onChangeSlideText(newText);
           }}
         ></textarea>
       </div>
@@ -301,12 +336,16 @@ const Scene = (props: SceneProps) => {
           </div>
         </div>
       </div>
-      {/* <div className="px-1 py-2">
+      <div className="px-1 py-2">
         <div className="font-medium pb-1">Voiceover Text</div>
         <textarea
-          className="border-2 rounded-md w-full px-2 py-3 resize-none text-gray-800 focus-visible:border-slate-600 outline-none"
+          className={classNames(
+            "border-2 rounded-md w-full px-2 py-3 resize-none text-gray-800 focus-visible:border-slate-600 outline-none"
+          )}
+          disabled={generatingSlideVoiceover}
           value={slide.voiceoverText}
           onChange={(e) => {
+            setEnableRegenrateButton(true);
             const newText = e.currentTarget.value;
             onSlideUpdate({
               voiceoverText: newText,
@@ -315,9 +354,26 @@ const Scene = (props: SceneProps) => {
         ></textarea>
       </div>
 
-      <button className="border-2 ml-1 px-2 py-1 rounded-sm border-gray-600 font-medium">
-        Regenerate voiceover
-      </button> */}
+      <button
+        className={classNames(
+          "border-2 ml-1 px-2 py-1 rounded-sm border-gray-200 font-medium min-w-[148px]",
+          { "pointer-events-none opacity-35": !enableRegenerateButton },
+          {
+            "pointer-events-auto bg-slate-200 opacity-100 transition ease-in-out":
+              enableRegenerateButton,
+          },
+          {
+            "pointer-events-none opacity-100": generatingSlideVoiceover,
+          }
+        )}
+        onClick={() => {
+          setGeneratingSlideVoiceover(true);
+          onClickRegenerateSlideVoiceover();
+          setEnableRegenrateButton(false);
+        }}
+      >
+        {!generatingSlideVoiceover ? `Regenerate voiceover` : <Loader />}
+      </button>
     </div>
   );
 };
@@ -392,14 +448,16 @@ const BGMusicSelect = (props: BGMusicSelectProps) => {
                     })}
                   </div>
                 </div>
-                <button
-                  className="opacity-0 flex-none bg-blue-600 text-white px-4 py-1 rounded-full font-extralight text-sm group-hover:opacity-100 transition ease-in-out mr-10"
-                  onClick={() => {
-                    updateBgMusic();
-                  }}
-                >
-                  Apply
-                </button>
+                <DialogClose>
+                  <button
+                    className="opacity-0 flex-none bg-blue-600 text-white px-4 py-1 rounded-full font-extralight text-sm group-hover:opacity-100 transition ease-in-out mr-10"
+                    onClick={() => {
+                      updateBgMusic(musicFile);
+                    }}
+                  >
+                    Apply
+                  </button>
+                </DialogClose>
                 <div className="flex-none">
                   {millisToMinutesAndSeconds(musicFile.duration)}
                 </div>
@@ -440,11 +498,14 @@ const Loader = () => (
 );
 
 const GlobalPanel = (props: GlobalPanelProps) => {
-  const { voiceover, bgMusic, slideshowId } = props;
+  const { slideshowId } = props;
   const [showMusicList, setShowMusicList] = useState(false);
   const [bgMusicList, setBgMusicList] = useState([]);
   const [generatingVoiceover, setGeneratingVoiceover] = useState(false);
   const [voiceType, setVoiceType] = useState<VoiceType>(null);
+
+  const slideshow = useEditorStore((state) => state.slideshow);
+  const updateSlideshow = useEditorStore((state) => state.updateSlideshow);
 
   useEffect(() => {
     const fetchBgMusicList = async () => {
@@ -454,13 +515,43 @@ const GlobalPanel = (props: GlobalPanelProps) => {
     fetchBgMusicList();
   }, []);
 
-  const updateBgMusic = () => {};
+  const updateBgMusic = async (musicFile) => {
+    const { success, message, backgroundMusicAudio } = await getUpdatedBgMusic(
+      slideshowId,
+      musicFile
+    );
 
-  const slideshow = useEditorStore((state) => state.slideshow);
-  const updateSlideshow = useEditorStore((state) => state.updateSlideshow);
+    if (success) {
+      const newSlideshowData = {
+        ...slideshow,
+        backgroundMusicAudio,
+      };
+      updateSlideshow(newSlideshowData);
+    } else {
+      notify(message);
+    }
+  };
+
+  const disableBgMusic = async (slideshowId) => {
+    const response = await getdisabledBgMusic(slideshowId);
+    if (response.success) {
+      const newSlideshowData = {
+        ...slideshow,
+        backgroundMusicAudio: null,
+      };
+
+      updateSlideshow(newSlideshowData);
+    } else {
+      notify(response.message);
+    }
+  };
 
   const changeVoiceType = async (slideshowId, voiceType) => {
-    await getRegeneratedVoiceType(slideshowId, voiceType);
+    const response = await getRegeneratedVoiceType(slideshowId, voiceType);
+
+    if (!response.success) {
+      notify(response.message);
+    }
     setGeneratingVoiceover(false);
     const newSlideshowData = {
       ...slideshow,
@@ -480,6 +571,22 @@ const GlobalPanel = (props: GlobalPanelProps) => {
     }
   };
 
+  const changeFormat = async (formatValue) => {
+    const response = await saveSlideshowSettings(slideshowId, {
+      sizeFormat: formatValue,
+    });
+    if (!response) {
+      notify("Error updating slideshow size format");
+    }
+  };
+
+  console.log("data", slideshow);
+  const artist = slideshow.backgroundMusicAudio?.artist;
+  const song = slideshow.backgroundMusicAudio?.songName.split(".")[0];
+  const songLabel = slideshow.backgroundMusicAudio
+    ? `${song} by ${artist}`
+    : "Music disabled";
+
   return (
     <div>
       <div className="p-2 font-medium text-xs">Theme</div>
@@ -498,14 +605,17 @@ const GlobalPanel = (props: GlobalPanelProps) => {
       <div className="py-3">
         <div className="p-2 font-medium text-xs">Size format</div>
         <div className="px-2 py-[1px]">
-          <Select>
+          <Select onValueChange={changeFormat}>
             <SelectTrigger className="w-[70%]">
-              <SelectValue placeholder="Format" />
+              <SelectValue
+                placeholder={`${slideshow.sizeFormat.split("_")[0].toLowerCase()}`}
+              />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Widescreen">Widescreen</SelectItem>
-              <SelectItem value="Vertical">Vertical</SelectItem>
-              <SelectItem value="Square">Square</SelectItem>
+              <SelectItem value="WIDESCREEN_16_9">Widescreen</SelectItem>
+              <SelectItem value="SQUARE_1_1">Square</SelectItem>
+              <SelectItem value="STORY_9_16">Story</SelectItem>
+              <SelectItem value="VERTICAL_4_5">Vertical</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -574,14 +684,19 @@ const GlobalPanel = (props: GlobalPanelProps) => {
         <div className="flex flex-row p-4 gap-10 w-[90%] ">
           <div className="flex items-center w-[50%] ">
             <Music width={"18px"} />
-            <div className="font-normal pl-2 pt-1">{bgMusic}</div>
+            <div className="font-normal pl-2 pt-1">{songLabel}</div>
           </div>
           <div className="flex flex-col w-[50%]">
             <BGMusicSelect
               bgMusicList={bgMusicList}
               updateBgMusic={updateBgMusic}
             />
-            <a className="underline cursor-pointer pt-1 ">Disable music</a>
+            <a
+              className="underline cursor-pointer pt-1 "
+              onClick={() => disableBgMusic(slideshowId)}
+            >
+              Disable music
+            </a>
           </div>
         </div>
       </div>
@@ -606,13 +721,7 @@ const EditorPanel = ({ slideshow, onSlideUpdate }: EditorPanelProps) => {
           onSlideUpdate={onSlideUpdate}
         />
       )}
-      {selectedTab === "global" && (
-        <GlobalPanel
-          voiceover={"Artist Name 1"}
-          bgMusic={slideshow.backgroundMusicAudio.artist}
-          slideshowId={slideshow.id}
-        />
-      )}
+      {selectedTab === "global" && <GlobalPanel slideshowId={slideshow.id} />}
     </>
   );
 };
@@ -624,7 +733,6 @@ const PreviewPanel = () => {
 const SlideshowEditor = () => {
   const { projectId } = useParams<SlideshowPreviewUrlParams>();
 
-  //Q: Is there a way to get all states from store together?
   const prompt = useEditorStore((state) => state.prompt);
   const slideshow: Slideshow = useEditorStore((state) => state.slideshow);
 
@@ -639,7 +747,6 @@ const SlideshowEditor = () => {
           getSlideshow(projectId),
         ]);
 
-        //Q: Is it possible to update all three states togehter?
         updatePrompt(projectData.prompt);
         updateSlideshow(slideshowData);
       } catch (error) {
@@ -650,7 +757,10 @@ const SlideshowEditor = () => {
     fetchData();
   }, []);
 
-  const onSlideUpdate = (slideId: number, updatedSlide: Partial<Slide>) => {
+  const onSlideUpdate = async (
+    slideId: number,
+    updatedSlide: Partial<Slide>
+  ) => {
     const slides = slideshow.slides.map((slide) => {
       if (slide.id === slideId) {
         slide = {
@@ -660,13 +770,13 @@ const SlideshowEditor = () => {
       }
       return slide;
     });
-
     const newSlideshowData = {
       ...slideshow,
       slides,
     };
 
     updateSlideshow(newSlideshowData);
+    console.log("Updated store slideshow", slideshow);
   };
 
   return (
@@ -684,6 +794,7 @@ const SlideshowEditor = () => {
           </div>
         </div>
       </div>
+      <Toaster />
     </Layout>
   );
 };

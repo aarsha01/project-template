@@ -72,7 +72,7 @@ export type BackgroundMusicFileType = {
 
 export interface BGMusicSelectProps {
   bgMusicList: BackgroundMusicFileType[];
-  updateBgMusic: () => void;
+  updateBgMusic: (musicFile) => void;
 }
 
 export interface EditorPanelProps {
@@ -82,8 +82,6 @@ export interface EditorPanelProps {
 
 export interface GlobalPanelProps {
   slideshowId: number;
-  voiceover: String;
-  bgMusic: String;
 }
 
 export interface BgMusicList {

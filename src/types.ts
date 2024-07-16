@@ -23,7 +23,8 @@ export type AudioAsset = {
   id: number;
   url: string;
   duration: number;
-  artist: string;
+  artist: string | null;
+  songName: string | null;
 };
 
 export type Slide = {
@@ -32,6 +33,7 @@ export type Slide = {
   text: string;
   imageAsset: ImageAsset;
   audioAsset: AudioAsset;
+  voiceoverText: string;
 };
 
 export const SIZE_FORMATS = [

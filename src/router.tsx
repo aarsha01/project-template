@@ -12,6 +12,8 @@ import ScriptEditor from "./routes/pages/script-editor";
 import SlideshowEditor from "./routes/slideshow-editor";
 import SlideshowPreview from "./routes/pages/slideshow-preview";
 import { ProjectPageRedirector } from "./routes/projects/project-redirector";
+import { TestGoogleImageSearch } from "./routes/pages/test-google-image-search";
+import { TestBingImageSearch } from "./routes/pages/test-bing-image-search";
 
 export default function Router() {
   return (
@@ -33,6 +35,14 @@ export default function Router() {
         <Route path="/projects/new" element={<CreateProject />} />
         <Route path="/projects" element={<Projects />}></Route>
         <Route path="/exports" element={<Exports />} />
+        <Route
+          path="/test/google-image-search"
+          element={<TestGoogleImageSearch />}
+        />
+        <Route
+          path="/test/bing-image-search"
+          element={<TestBingImageSearch />}
+        />
         <Route path="/" element={<Navigate to="/projects" />} />
         <Route path="*" element={<div>Not Found</div>} />
       </Routes>
